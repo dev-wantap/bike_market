@@ -54,6 +54,7 @@ app.*.map.json
 .claude/
 .kiro/
 .vscode/
+.serena/
 
 # Additional Flutter files
 *.g.dart
