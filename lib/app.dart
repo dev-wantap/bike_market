@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'core/theme/app_theme.dart';
-import 'widgets/screens/splash/splash_screen.dart';
+import 'widgets/auth/auth_gate.dart';
 
 class BikeMarketApp extends StatelessWidget {
   const BikeMarketApp({super.key});
@@ -10,7 +10,7 @@ class BikeMarketApp extends StatelessWidget {
     return MaterialApp(
       title: 'BikeMarket',
       theme: AppTheme.lightTheme,
-      home: const SplashScreen(),
+      home: const AuthGate(),
       debugShowCheckedModeBanner: false,
     );
   }

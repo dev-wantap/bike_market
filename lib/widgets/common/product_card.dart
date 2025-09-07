@@ -31,11 +31,9 @@ class ProductCard extends StatelessWidget {
   Widget _buildGridCard(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Hero(
-        tag: 'product_${type.toString()}_${product.id}', // 1. Fix Hero tag
-        child: Material(
-          color: Colors.transparent,
-          child: Container(
+      child: Material(
+        color: Colors.transparent,
+        child: Container(
             width: AppDimensions.productCardWidth,
             decoration: BoxDecoration(
               color: AppColors.cardBackground,
@@ -61,7 +59,9 @@ class ProductCard extends StatelessWidget {
                         Expanded( // 2. Fix Overflow by wrapping title in Expanded
                           child: Text(
                             product.title,
-                            style: AppTextStyles.subtitle2,
+                            style: AppTextStyles.subtitle2.copyWith(
+                              height: 1.2, // 이 부분 추가
+                            ),
                             maxLines: 2,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -86,8 +86,7 @@ class ProductCard extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildListCard(BuildContext context) {
@@ -109,26 +108,33 @@ class ProductCard extends StatelessWidget {
             ),
           ],
         ),
-        child: Row(
-          children: [
-            ClipRRect(
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(AppDimensions.radiusMedium),
-                bottomLeft: Radius.circular(AppDimensions.radiusMedium),
+        child: SizedBox(
+          height: 120, // 이미지 높이 증가
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(AppDimensions.radiusMedium),
+                  bottomLeft: Radius.circular(AppDimensions.radiusMedium),
+                ),
+                child: SizedBox(
+                  width: 120,
+                  height: 120,
+                  child: _buildImageContent(),
+                ),
               ),
-              child: SizedBox(
-                width: 120,
-                height: 100,
-                child: _buildImageContent(),
-              ),
-            ),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingMedium,
+                    vertical: AppDimensions.paddingSmall,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.max,
                   children: [
+                    // 상단: 제목 + 찜 버튼
                     Row(
                       children: [
                         Expanded(
@@ -153,19 +159,22 @@ class ProductCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: AppDimensions.spacingSmall),
+                    const SizedBox(height: 6),
+                    // 중단: 가격
                     Text(
                       _formatPrice(product.price),
                       style: AppTextStyles.price,
                     ),
-                    const SizedBox(height: AppDimensions.spacingXSmall),
+                    const SizedBox(height: 4),
+                    // 위치 정보
                     Text(
                       product.location,
                       style: AppTextStyles.caption,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: AppDimensions.spacingXSmall),
+                    const SizedBox(height: 4),
+                    // 하단: 등록 시간
                     Text(
                       _formatTimeAgo(product.createdAt),
                       style: AppTextStyles.caption,
@@ -175,6 +184,7 @@ class ProductCard extends StatelessWidget {
               ),
             ),
           ],
+          ),
         ),
       ),
     );

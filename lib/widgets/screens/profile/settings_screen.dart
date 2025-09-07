@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../main.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -381,23 +383,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: const Text('취소'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
+              // 바로 로그인 화면으로 이동
               Navigator.of(context).popUntil((route) => route.isFirst);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('로그아웃되었습니다')),
-              );
+              // 백그라운드에서 로그아웃 처리
+              _handleLogout(context);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-            ),
-            child: const Text(
-              '로그아웃',
-              style: TextStyle(color: Colors.white),
-            ),
+            child: const Text('로그아웃'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    try {
+      print('Starting logout process...');
+      await supabase.auth.signOut();
+      print('Logout successful');
+      
+      // 스낵바는 표시하지 않음 (이미 로그인 화면으로 이동했기 때문)
+    } catch (e) {
+      print('Logout error: $e');
+      // 에러 발생시에만 스낵바 표시
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('로그아웃 실패: $e')),
+        );
+      }
+    }
   }
 }
