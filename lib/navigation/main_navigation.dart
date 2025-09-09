@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../core/constants/colors.dart';
 import '../data/dummy_data.dart';
 import '../widgets/screens/home/home_screen.dart';
-import '../widgets/screens/search/search_screen.dart';
+import '../widgets/screens/reservation/reservation_list_screen.dart';
 import '../widgets/screens/add/add_product_screen.dart';
 import '../widgets/screens/chat/chat_list_screen.dart';
 import '../widgets/screens/profile/profile_screen.dart';
@@ -29,7 +29,7 @@ class _MainNavigationState extends State<MainNavigation> {
   void _updateScreens() {
     _screens = [
       HomeScreen(key: ValueKey(_refreshTrigger), onRefresh: _refreshHomeScreen),
-      const SearchScreen(),
+      const ReservationListScreen(),
       AddProductScreen(onProductAdded: _onProductAdded),
       const ChatListScreen(),
       const ProfileScreen(),
@@ -58,10 +58,7 @@ class _MainNavigationState extends State<MainNavigation> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _currentIndex,
-        children: _screens,
-      ),
+      body: IndexedStack(index: _currentIndex, children: _screens),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         currentIndex: _currentIndex,
@@ -75,13 +72,10 @@ class _MainNavigationState extends State<MainNavigation> {
         selectedFontSize: 12,
         unselectedFontSize: 12,
         items: [
+          const BottomNavigationBarItem(icon: Icon(Icons.home), label: '홈'),
           const BottomNavigationBarItem(
-            icon: Icon(Icons.home),
-            label: '홈',
-          ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.search),
-            label: '검색',
+            icon: Icon(Icons.calendar_today),
+            label: '예약',
           ),
           BottomNavigationBarItem(
             icon: Container(
@@ -90,11 +84,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 color: AppColors.primary,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.add,
-                color: Colors.white,
-                size: 20,
-              ),
+              child: const Icon(Icons.add, color: Colors.white, size: 20),
             ),
             label: '등록',
           ),
@@ -130,10 +120,7 @@ class _MainNavigationState extends State<MainNavigation> {
             ),
             label: '채팅',
           ),
-          const BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: '프로필',
-          ),
+          const BottomNavigationBarItem(icon: Icon(Icons.person), label: '프로필'),
         ],
       ),
     );
