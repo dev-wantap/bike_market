@@ -57,9 +57,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           backgroundColor: AppColors.surface,
           elevation: 0,
         ),
-        body: const Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: const Center(child: CircularProgressIndicator()),
       );
     }
     return Scaffold(
@@ -72,9 +70,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => const SettingsScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
               );
             },
             icon: const Icon(Icons.settings),
@@ -106,16 +102,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
               CircleAvatar(
                 radius: AppDimensions.avatarLarge / 2,
                 backgroundColor: AppColors.primary,
-                backgroundImage: _userProfile?.avatarUrl != null 
-                    ? NetworkImage(_userProfile!.avatarUrl!) 
+                backgroundImage: _userProfile?.avatarUrl != null
+                    ? NetworkImage(_userProfile!.avatarUrl!)
                     : null,
                 child: _userProfile?.avatarUrl == null
                     ? Text(
                         (_userProfile?.nickname?.isNotEmpty == true
-                            ? _userProfile!.nickname!.substring(0, 1).toUpperCase()
-                            : supabase.auth.currentUser?.userMetadata?['full_name']?.toString().substring(0, 1).toUpperCase()
-                            ?? supabase.auth.currentUser?.email?.substring(0, 1).toUpperCase()
-                            ?? 'U'),
+                            ? _userProfile!.nickname!
+                                  .substring(0, 1)
+                                  .toUpperCase()
+                            : supabase
+                                      .auth
+                                      .currentUser
+                                      ?.userMetadata?['full_name']
+                                      ?.toString()
+                                      .substring(0, 1)
+                                      .toUpperCase() ??
+                                  supabase.auth.currentUser?.email
+                                      ?.substring(0, 1)
+                                      .toUpperCase() ??
+                                  'U'),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 32,
@@ -133,10 +139,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Flexible(
                           child: Text(
-                            _userProfile?.nickname ?? 
-                            supabase.auth.currentUser?.userMetadata?['full_name'] as String? ??
-                            supabase.auth.currentUser?.email?.split('@').first ??
-                            'User',
+                            _userProfile?.nickname ??
+                                supabase
+                                        .auth
+                                        .currentUser
+                                        ?.userMetadata?['full_name']
+                                    as String? ??
+                                supabase.auth.currentUser?.email
+                                    ?.split('@')
+                                    .first ??
+                                'User',
                             style: AppTextStyles.headline2,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -150,7 +162,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           ),
                           decoration: BoxDecoration(
                             color: AppColors.secondary,
-                            borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                            borderRadius: BorderRadius.circular(
+                              AppDimensions.radiusSmall,
+                            ),
                           ),
                           child: const Text(
                             '인증',
@@ -221,7 +235,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   vertical: AppDimensions.paddingMedium,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusMedium,
+                  ),
                 ),
               ),
             ),
@@ -233,7 +249,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildStatsSection() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.marginMedium),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.marginMedium,
+      ),
       padding: const EdgeInsets.all(AppDimensions.paddingLarge),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -264,32 +282,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
       children: [
         Text(
           value,
-          style: AppTextStyles.headline2.copyWith(
-            color: AppColors.primary,
-          ),
+          style: AppTextStyles.headline2.copyWith(color: AppColors.primary),
         ),
         const SizedBox(height: AppDimensions.spacingXSmall),
         Text(
           label,
-          style: AppTextStyles.caption.copyWith(
-            color: AppColors.textSecondary,
-          ),
+          style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
         ),
       ],
     );
   }
 
   Widget _buildStatDivider() {
-    return Container(
-      width: 1,
-      height: 40,
-      color: AppColors.divider,
-    );
+    return Container(width: 1, height: 40, color: AppColors.divider);
   }
 
   Widget _buildMenuSection(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.marginMedium),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.marginMedium,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
@@ -337,9 +349,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: '거래 내역',
             subtitle: '구매한 상품들의 거래 내역을 확인하세요',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('거래 내역 기능')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('거래 내역 기능')));
             },
           ),
           _buildMenuDivider(),
@@ -349,9 +361,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: '고객센터',
             subtitle: '문의사항이나 도움이 필요하시면 연락주세요',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('고객센터 기능')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('고객센터 기능')));
             },
           ),
           _buildMenuDivider(),
@@ -393,20 +405,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
           size: AppDimensions.iconMedium,
         ),
       ),
-      title: Text(
-        title,
-        style: AppTextStyles.subtitle1,
-      ),
+      title: Text(title, style: AppTextStyles.subtitle1),
       subtitle: Text(
         subtitle,
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.textSecondary,
-        ),
+        style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
       ),
-      trailing: const Icon(
-        Icons.chevron_right,
-        color: AppColors.textLight,
-      ),
+      trailing: const Icon(Icons.chevron_right, color: AppColors.textLight),
       onTap: onTap,
     );
   }
@@ -428,7 +432,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final locationController = TextEditingController(
       text: _userProfile?.location ?? '',
     );
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -480,29 +484,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
     String location,
   ) async {
     final trimmedNickname = nickname.trim();
-    
+
     // 닉네임 유효성 검사
     if (trimmedNickname.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('닉네임을 입력해주세요')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('닉네임을 입력해주세요')));
       return;
     }
-    
+
     if (trimmedNickname.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('닉네임은 최소 3자 이상이어야 합니다')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('닉네임은 최소 3자 이상이어야 합니다')));
       return;
     }
-    
+
     if (trimmedNickname.length > 20) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('닉네임은 최대 20자까지 가능합니다')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('닉네임은 최대 20자까지 가능합니다')));
       return;
     }
-    
+
     // 특수문자 및 이모지 체크 (기본적인 한글, 영문, 숫자, 공백만 허용)
     final nicknameRegex = RegExp(r'^[가-힣a-zA-Z0-9\s]+$');
     if (!nicknameRegex.hasMatch(trimmedNickname)) {
@@ -518,36 +522,36 @@ class _ProfileScreenState extends State<ProfileScreen> {
         nickname: trimmedNickname,
         location: location.trim().isEmpty ? null : location.trim(),
       );
-      
+
       if (!success) {
         throw Exception('프로필 업데이트에 실패했습니다');
       }
-      
+
       // 프로필 다시 로드
       await _loadUserProfile();
-      
+
       if (context.mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('프로필이 수정되었습니다')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('프로필이 수정되었습니다')));
       }
     } catch (e) {
       log('Error updating profile: $e');
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('프로필 수정 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('프로필 수정 실패: $e')));
       }
     }
   }
 
   String _formatJoinDate(DateTime? createdAt) {
     if (createdAt == null) return '날짜 정보 없음';
-    
+
     final year = createdAt.year;
     final month = createdAt.month;
-    
+
     return '$year년 ${month}월';
   }
 

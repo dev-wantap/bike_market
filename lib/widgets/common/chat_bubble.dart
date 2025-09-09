@@ -7,10 +7,7 @@ import '../../data/models/chat.dart';
 class ChatBubble extends StatelessWidget {
   final Message message;
 
-  const ChatBubble({
-    super.key,
-    required this.message,
-  });
+  const ChatBubble({super.key, required this.message});
 
   @override
   Widget build(BuildContext context) {
@@ -25,8 +22,9 @@ class ChatBubble extends StatelessWidget {
           horizontal: AppDimensions.marginMedium,
         ),
         child: Column(
-          crossAxisAlignment:
-              message.isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          crossAxisAlignment: message.isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             Container(
               padding: const EdgeInsets.symmetric(
@@ -38,9 +36,12 @@ class ChatBubble extends StatelessWidget {
                     ? AppColors.chatBubbleMe
                     : AppColors.chatBubbleOther,
                 borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(AppDimensions.chatBubbleRadius),
-                  topRight:
-                      const Radius.circular(AppDimensions.chatBubbleRadius),
+                  topLeft: const Radius.circular(
+                    AppDimensions.chatBubbleRadius,
+                  ),
+                  topRight: const Radius.circular(
+                    AppDimensions.chatBubbleRadius,
+                  ),
                   bottomLeft: message.isMe
                       ? const Radius.circular(AppDimensions.chatBubbleRadius)
                       : const Radius.circular(AppDimensions.radiusSmall),
@@ -52,10 +53,7 @@ class ChatBubble extends StatelessWidget {
               child: _buildMessageContent(),
             ),
             const SizedBox(height: AppDimensions.spacingXSmall),
-            Text(
-              _formatTime(message.timestamp),
-              style: AppTextStyles.caption,
-            ),
+            Text(_formatTime(message.timestamp), style: AppTextStyles.caption),
           ],
         ),
       ),
@@ -79,8 +77,7 @@ class ChatBubble extends StatelessWidget {
               height: 150,
               decoration: BoxDecoration(
                 color: Colors.grey[300],
-                borderRadius:
-                    BorderRadius.circular(AppDimensions.radiusSmall),
+                borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
               ),
               child: const Icon(
                 Icons.image,

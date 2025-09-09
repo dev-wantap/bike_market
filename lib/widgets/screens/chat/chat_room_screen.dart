@@ -23,7 +23,7 @@ class ChatRoomScreen extends StatefulWidget {
 class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   final List<Message> _messages = [
     Message(
       id: 'msg1',
@@ -84,10 +84,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ),
             const SizedBox(width: AppDimensions.spacingSmall),
-            Text(
-              widget.otherUser.nickname,
-              style: AppTextStyles.subtitle1,
-            ),
+            Text(widget.otherUser.nickname, style: AppTextStyles.subtitle1),
           ],
         ),
         actions: [
@@ -125,9 +122,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
       padding: const EdgeInsets.all(AppDimensions.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.background,
-        border: Border(
-          bottom: BorderSide(color: AppColors.divider, width: 1),
-        ),
+        border: Border(bottom: BorderSide(color: AppColors.divider, width: 1)),
       ),
       child: Row(
         children: [
@@ -180,22 +175,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
         left: AppDimensions.paddingMedium,
         right: AppDimensions.paddingMedium,
         top: AppDimensions.paddingMedium,
-        bottom: AppDimensions.paddingMedium + MediaQuery.of(context).padding.bottom,
+        bottom:
+            AppDimensions.paddingMedium + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          top: BorderSide(color: AppColors.divider, width: 1),
-        ),
+        border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
       ),
       child: Row(
         children: [
           IconButton(
             onPressed: () {
               // Handle attachment
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('파일 첨부 기능')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('파일 첨부 기능')));
             },
             icon: const Icon(Icons.add),
           ),
@@ -205,15 +199,21 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               decoration: InputDecoration(
                 hintText: '메시지를 입력하세요',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusLarge,
+                  ),
                   borderSide: const BorderSide(color: AppColors.border),
                 ),
                 enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusLarge,
+                  ),
                   borderSide: const BorderSide(color: AppColors.border),
                 ),
                 focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusLarge,
+                  ),
                   borderSide: const BorderSide(color: AppColors.primary),
                 ),
                 contentPadding: const EdgeInsets.symmetric(
@@ -234,11 +234,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             ),
             child: IconButton(
               onPressed: _sendMessage,
-              icon: const Icon(
-                Icons.send,
-                color: Colors.white,
-                size: 20,
-              ),
+              icon: const Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -299,9 +295,6 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   }
 
   String _formatPrice(int price) {
-    return '${price.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    )}원';
+    return '${price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
   }
 }

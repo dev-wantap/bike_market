@@ -54,7 +54,7 @@ class ProfileService {
   }) async {
     try {
       final now = DateTime.now().toIso8601String();
-      
+
       final data = {
         'id': userId,
         'nickname': nickname,
@@ -115,10 +115,7 @@ class ProfileService {
       if (avatarUrl != null) updateData['avatar_url'] = avatarUrl;
       if (location != null) updateData['location'] = location;
 
-      await supabase
-          .from(tableName)
-          .update(updateData)
-          .eq('id', user.id);
+      await supabase.from(tableName).update(updateData).eq('id', user.id);
 
       return true;
     } catch (e) {
@@ -157,7 +154,7 @@ class ProfileService {
   }) async {
     try {
       final now = DateTime.now().toIso8601String();
-      
+
       final data = {
         'id': userId,
         'nickname': nickname ?? 'User',

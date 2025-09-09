@@ -11,7 +11,7 @@ class AppTheme {
       primarySwatch: Colors.blue,
       primaryColor: AppColors.primary,
       scaffoldBackgroundColor: AppColors.background,
-      
+
       // Color scheme
       colorScheme: const ColorScheme.light(
         primary: AppColors.primary,
@@ -70,20 +70,14 @@ class AppTheme {
             AppDimensions.buttonMinWidth,
             AppDimensions.buttonHeight,
           ),
-          textStyle: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
         ),
       ),
 
       textButtonTheme: TextButtonThemeData(
         style: TextButton.styleFrom(
           foregroundColor: AppColors.primary,
-          textStyle: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-          ),
+          textStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
         ),
       ),
 
@@ -145,10 +139,7 @@ class AppTheme {
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.surface,
         deleteIconColor: AppColors.textSecondary,
-        labelStyle: const TextStyle(
-          color: AppColors.textPrimary,
-          fontSize: 12,
-        ),
+        labelStyle: const TextStyle(color: AppColors.textPrimary, fontSize: 12),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
         ),

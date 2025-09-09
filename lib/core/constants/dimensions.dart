@@ -55,13 +55,13 @@ class AppDimensions {
   // Card dimensions
   static const double cardElevation = 2.0;
   static const double cardRadius = 12.0;
-  
+
   // Product card dimensions
   static const double productCardWidth = 160.0;
   static const double productCardHeight = 200.0;
   static const double productImageHeight = 120.0;
 
-  // Category item dimensions  
+  // Category item dimensions
   static const double categoryItemSize = 64.0;
 
   // Chat bubble

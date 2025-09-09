@@ -12,6 +12,7 @@ class ProductCard extends StatelessWidget {
   final ProductCardType type;
   final VoidCallback? onTap;
   final VoidCallback? onFavorite;
+  final Widget? trailing;
 
   const ProductCard({
     super.key,
@@ -19,6 +20,7 @@ class ProductCard extends StatelessWidget {
     this.type = ProductCardType.grid,
     this.onTap,
     this.onFavorite,
+    this.trailing,
   });
 
   @override
@@ -34,59 +36,60 @@ class ProductCard extends StatelessWidget {
       child: Material(
         color: Colors.transparent,
         child: Container(
-            width: AppDimensions.productCardWidth,
-            decoration: BoxDecoration(
-              color: AppColors.cardBackground,
-              borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withAlpha(13),
-                  blurRadius: 4,
-                  offset: const Offset(0, 2),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildImage(),
-                Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.all(AppDimensions.paddingSmall),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded( // 2. Fix Overflow by wrapping title in Expanded
-                          child: Text(
-                            product.title,
-                            style: AppTextStyles.subtitle2.copyWith(
-                              height: 1.2, // 이 부분 추가
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+          width: AppDimensions.productCardWidth,
+          decoration: BoxDecoration(
+            color: AppColors.cardBackground,
+            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withAlpha(13),
+                blurRadius: 4,
+                offset: const Offset(0, 2),
+              ),
+            ],
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildImage(),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.all(AppDimensions.paddingSmall),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        // 2. Fix Overflow by wrapping title in Expanded
+                        child: Text(
+                          product.title,
+                          style: AppTextStyles.subtitle2.copyWith(
+                            height: 1.2, // 이 부분 추가
                           ),
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXSmall),
-                        Text(
-                          _formatPrice(product.price),
-                          style: AppTextStyles.priceSmall,
-                        ),
-                        const SizedBox(height: AppDimensions.spacingXSmall),
-                        Text(
-                          product.location,
-                          style: AppTextStyles.caption,
-                          maxLines: 1,
+                          maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: AppDimensions.spacingXSmall),
+                      Text(
+                        _formatPrice(product.price),
+                        style: AppTextStyles.priceSmall,
+                      ),
+                      const SizedBox(height: AppDimensions.spacingXSmall),
+                      Text(
+                        product.location,
+                        style: AppTextStyles.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
-      );
+      ),
+    );
   }
 
   Widget _buildListCard(BuildContext context) {
@@ -108,8 +111,7 @@ class ProductCard extends StatelessWidget {
             ),
           ],
         ),
-        child: SizedBox(
-          height: 120, // 이미지 높이 증가
+        child: IntrinsicHeight(
           child: Row(
             children: [
               ClipRRect(
@@ -119,8 +121,10 @@ class ProductCard extends StatelessWidget {
                 ),
                 child: SizedBox(
                   width: 120,
-                  height: 120,
-                  child: _buildImageContent(),
+                  child: AspectRatio(
+                    aspectRatio: 1.0,
+                    child: _buildImageContent(),
+                  ),
                 ),
               ),
               Expanded(
@@ -133,57 +137,60 @@ class ProductCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.start,
                     mainAxisSize: MainAxisSize.max,
-                  children: [
-                    // 상단: 제목 + 찜 버튼
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            product.title,
-                            style: AppTextStyles.subtitle1,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                    children: [
+                      // 상단: 제목 + 찜 버튼
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              product.title,
+                              style: AppTextStyles.subtitle1,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
-                        ),
-                        GestureDetector(
-                          onTap: onFavorite,
-                          child: Icon(
-                            product.isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: product.isFavorite
-                                ? AppColors.error
-                                : AppColors.textSecondary,
-                            size: AppDimensions.iconSmall,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    // 중단: 가격
-                    Text(
-                      _formatPrice(product.price),
-                      style: AppTextStyles.price,
-                    ),
-                    const SizedBox(height: 4),
-                    // 위치 정보
-                    Text(
-                      product.location,
-                      style: AppTextStyles.caption,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    // 하단: 등록 시간
-                    Text(
-                      _formatTimeAgo(product.createdAt),
-                      style: AppTextStyles.caption,
-                    ),
-                  ],
+                          if (trailing != null)
+                            trailing!
+                          else
+                            GestureDetector(
+                              onTap: onFavorite,
+                              child: Icon(
+                                product.isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: product.isFavorite
+                                    ? AppColors.error
+                                    : AppColors.textSecondary,
+                                size: AppDimensions.iconSmall,
+                              ),
+                            ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      // 중단: 가격
+                      Text(
+                        _formatPrice(product.price),
+                        style: AppTextStyles.price,
+                      ),
+                      const SizedBox(height: 4),
+                      // 위치 정보
+                      Text(
+                        product.location,
+                        style: AppTextStyles.caption,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      // 하단: 등록 시간
+                      Text(
+                        _formatTimeAgo(product.createdAt),
+                        style: AppTextStyles.caption,
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
           ),
         ),
       ),
@@ -228,9 +235,7 @@ class ProductCard extends StatelessWidget {
                   ],
                 ),
                 child: Icon(
-                  product.isFavorite
-                      ? Icons.favorite
-                      : Icons.favorite_border,
+                  product.isFavorite ? Icons.favorite : Icons.favorite_border,
                   color: product.isFavorite
                       ? AppColors.error
                       : AppColors.textSecondary,
@@ -284,10 +289,7 @@ class ProductCard extends StatelessWidget {
   }
 
   String _formatPrice(int price) {
-    return '${price.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    )}원';
+    return '${price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
   }
 
   String _formatTimeAgo(DateTime dateTime) {

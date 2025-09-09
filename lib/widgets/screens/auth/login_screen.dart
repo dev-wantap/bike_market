@@ -46,10 +46,9 @@ class _LoginScreenState extends State<LoginScreen> {
         redirectTo: kIsWeb ? null : 'kim.gwanwoo.bikemarket://login-callback',
         authScreenLaunchMode: LaunchMode.externalApplication,
       );
-      
+
       // OAuth 요청 성공 (실제 로그인 완료는 AuthState 리스너에서 처리)
       log('OAuth request initiated successfully');
-      
     } on AuthException catch (error) {
       log('AuthException: ${error.message}');
       if (mounted) {
@@ -91,13 +90,9 @@ class _LoginScreenState extends State<LoginScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // 로고 영역
-              const Icon(
-                Icons.pedal_bike,
-                size: 120,
-                color: AppColors.primary,
-              ),
+              const Icon(Icons.pedal_bike, size: 120, color: AppColors.primary),
               const SizedBox(height: 24),
-              
+
               // 앱 이름
               const Text(
                 'CycleLink',
@@ -109,41 +104,38 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // 서브 텍스트
               const Text(
                 '중고 자전거 거래의 새로운 경험',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 16,
-                  color: AppColors.textSecondary,
-                ),
+                style: TextStyle(fontSize: 16, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 48),
-              
+
               // 구글 로그인 버튼
               SizedBox(
                 height: 56,
                 child: ElevatedButton.icon(
                   onPressed: _isLoading ? null : _signInWithGoogle,
-                  icon: _isLoading 
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  icon: _isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Colors.white,
+                            ),
+                          ),
+                        )
+                      : Image.asset(
+                          'assets/google_logo.png', // 구글 로고 이미지가 있다면
+                          width: 24,
+                          height: 24,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(Icons.login, color: Colors.white),
                         ),
-                      )
-                    : Image.asset(
-                        'assets/google_logo.png', // 구글 로고 이미지가 있다면
-                        width: 24,
-                        height: 24,
-                        errorBuilder: (context, error, stackTrace) => const Icon(
-                          Icons.login,
-                          color: Colors.white,
-                        ),
-                      ),
                   label: Text(
                     _isLoading ? '로그인 중...' : 'Google로 계속하기',
                     style: const TextStyle(
@@ -164,15 +156,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-              
+
               // 개인정보 처리방침 등 링크
               Text(
                 '로그인하면 서비스 이용약관과 개인정보 처리방침에 동의하게 됩니다.',
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textLight,
-                ),
+                style: TextStyle(fontSize: 12, color: AppColors.textLight),
               ),
             ],
           ),

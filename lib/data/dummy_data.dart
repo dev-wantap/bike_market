@@ -116,7 +116,8 @@ class DummyData {
       id: 'product1',
       title: 'Giant TCR Advanced Pro 로드바이크',
       price: 1200000,
-      description: '2022년 모델 Giant TCR Advanced Pro입니다. 카본 프레임으로 매우 가볍고 빠릅니다. 주행거리 약 3000km, 관리 상태 양호합니다.',
+      description:
+          '2022년 모델 Giant TCR Advanced Pro입니다. 카본 프레임으로 매우 가볍고 빠릅니다. 주행거리 약 3000km, 관리 상태 양호합니다.',
       images: ['bike1.jpg', 'bike1_2.jpg'],
       category: 'road',
       location: '서울 강남구',
@@ -128,7 +129,8 @@ class DummyData {
       id: 'product2',
       title: 'Trek Fuel EX 9.8 MTB',
       price: 890000,
-      description: 'Trek Fuel EX 9.8 MTB입니다. 산악 라이딩에 최적화된 풀 서스펜션 바이크입니다. 상태 매우 좋습니다.',
+      description:
+          'Trek Fuel EX 9.8 MTB입니다. 산악 라이딩에 최적화된 풀 서스펜션 바이크입니다. 상태 매우 좋습니다.',
       images: ['mtb1.jpg'],
       category: 'mtb',
       location: '부산 해운대구',
@@ -311,87 +313,91 @@ class DummyData {
 
   // Chat rooms with dummy messages
   static List<ChatRoom> get chatRooms => [
-        ChatRoom(
-          id: 'chat1',
-          product: products[1], // Trek MTB
-          otherUser: sellers[1],
-          unreadCount: 2,
-          messages: [
-            Message(
-              id: 'msg1',
-              content: '안녕하세요, 자전거 상태가 어떤가요?',
-              isMe: true,
-              timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-              type: MessageType.text,
-            ),
-            Message(
-              id: 'msg2',
-              content: '안녕하세요! 상태 정말 좋습니다. 거의 새 자전거처럼 관리했어요.',
-              isMe: false,
-              timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 50)),
-              type: MessageType.text,
-            ),
-            Message(
-              id: 'msg3',
-              content: '혹시 실제로 볼 수 있을까요?',
-              isMe: true,
-              timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 30)),
-              type: MessageType.text,
-            ),
-            Message(
-              id: 'msg4',
-              content: '네, 언제든지 가능합니다. 해운대쪽에서 보실 수 있어요.',
-              isMe: false,
-              timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-              type: MessageType.text,
-            ),
-          ],
+    ChatRoom(
+      id: 'chat1',
+      product: products[1], // Trek MTB
+      otherUser: sellers[1],
+      unreadCount: 2,
+      messages: [
+        Message(
+          id: 'msg1',
+          content: '안녕하세요, 자전거 상태가 어떤가요?',
+          isMe: true,
+          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+          type: MessageType.text,
         ),
-        ChatRoom(
-          id: 'chat2',
-          product: products[3], // Brompton 접이식
-          otherUser: sellers[3],
-          unreadCount: 0,
-          messages: [
-            Message(
-              id: 'msg5',
-              content: '접이식 자전거 구매 희망합니다.',
-              isMe: true,
-              timestamp: DateTime.now().subtract(const Duration(days: 1)),
-              type: MessageType.text,
-            ),
-            Message(
-              id: 'msg6',
-              content: '네, 감사합니다. 직접 보고 결정하세요.',
-              isMe: false,
-              timestamp: DateTime.now().subtract(const Duration(hours: 20)),
-              type: MessageType.text,
-            ),
-          ],
+        Message(
+          id: 'msg2',
+          content: '안녕하세요! 상태 정말 좋습니다. 거의 새 자전거처럼 관리했어요.',
+          isMe: false,
+          timestamp: DateTime.now().subtract(
+            const Duration(hours: 1, minutes: 50),
+          ),
+          type: MessageType.text,
         ),
-        ChatRoom(
-          id: 'chat3',
-          product: products[7], // 시티바이크
-          otherUser: sellers[2],
-          unreadCount: 1,
-          messages: [
-            Message(
-              id: 'msg7',
-              content: '가격 협상 가능한가요?',
-              isMe: true,
-              timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-              type: MessageType.text,
-            ),
-            Message(
-              id: 'msg8',
-              content: '조금은 가능합니다. 얼마 정도 생각하고 계신가요?',
-              isMe: false,
-              timestamp: DateTime.now().subtract(const Duration(minutes: 20)),
-              type: MessageType.text,
-            ),
-          ],
+        Message(
+          id: 'msg3',
+          content: '혹시 실제로 볼 수 있을까요?',
+          isMe: true,
+          timestamp: DateTime.now().subtract(
+            const Duration(hours: 1, minutes: 30),
+          ),
+          type: MessageType.text,
         ),
-      ];
+        Message(
+          id: 'msg4',
+          content: '네, 언제든지 가능합니다. 해운대쪽에서 보실 수 있어요.',
+          isMe: false,
+          timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
+          type: MessageType.text,
+        ),
+      ],
+    ),
+    ChatRoom(
+      id: 'chat2',
+      product: products[3], // Brompton 접이식
+      otherUser: sellers[3],
+      unreadCount: 0,
+      messages: [
+        Message(
+          id: 'msg5',
+          content: '접이식 자전거 구매 희망합니다.',
+          isMe: true,
+          timestamp: DateTime.now().subtract(const Duration(days: 1)),
+          type: MessageType.text,
+        ),
+        Message(
+          id: 'msg6',
+          content: '네, 감사합니다. 직접 보고 결정하세요.',
+          isMe: false,
+          timestamp: DateTime.now().subtract(const Duration(hours: 20)),
+          type: MessageType.text,
+        ),
+      ],
+    ),
+    ChatRoom(
+      id: 'chat3',
+      product: products[7], // 시티바이크
+      otherUser: sellers[2],
+      unreadCount: 1,
+      messages: [
+        Message(
+          id: 'msg7',
+          content: '가격 협상 가능한가요?',
+          isMe: true,
+          timestamp: DateTime.now().subtract(const Duration(hours: 3)),
+          type: MessageType.text,
+        ),
+        Message(
+          id: 'msg8',
+          content: '조금은 가능합니다. 얼마 정도 생각하고 계신가요?',
+          isMe: false,
+          timestamp: DateTime.now().subtract(const Duration(minutes: 20)),
+          type: MessageType.text,
+        ),
+      ],
+    ),
+  ];
 
   // Get total unread message count
   static int get totalUnreadCount =>

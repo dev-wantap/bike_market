@@ -39,25 +39,23 @@ class ChatListScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-          Icon(
-            Icons.chat_bubble_outline,
-            size: 80,
-            color: AppColors.textLight,
-          ),
-          const SizedBox(height: AppDimensions.spacingLarge),
-          Text(
-            '아직 채팅 중인 거래가 없습니다',
-            style: AppTextStyles.subtitle1.copyWith(
-              color: AppColors.textSecondary,
-            ),
-          ),
-          const SizedBox(height: AppDimensions.spacingSmall),
-          Text(
-            '관심있는 상품에서 채팅을 시작해보세요',
-            style: AppTextStyles.body2.copyWith(
+            Icon(
+              Icons.chat_bubble_outline,
+              size: 80,
               color: AppColors.textLight,
             ),
-          ),
+            const SizedBox(height: AppDimensions.spacingLarge),
+            Text(
+              '아직 채팅 중인 거래가 없습니다',
+              style: AppTextStyles.subtitle1.copyWith(
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: AppDimensions.spacingSmall),
+            Text(
+              '관심있는 상품에서 채팅을 시작해보세요',
+              style: AppTextStyles.body2.copyWith(color: AppColors.textLight),
+            ),
           ],
         ),
       ),

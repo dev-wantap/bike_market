@@ -59,10 +59,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            child: Text(
-              '알림 설정',
-              style: AppTextStyles.subtitle1,
-            ),
+            child: Text('알림 설정', style: AppTextStyles.subtitle1),
           ),
           _buildSwitchTile(
             title: '푸시 알림',
@@ -103,7 +100,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Widget _buildAccountSection(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.marginMedium),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.marginMedium,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
@@ -120,18 +119,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            child: Text(
-              '계정',
-              style: AppTextStyles.subtitle1,
-            ),
+            child: Text('계정', style: AppTextStyles.subtitle1),
           ),
           _buildMenuItem(
             icon: Icons.person_outline,
             title: '개인정보 수정',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('개인정보 수정 기능')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('개인정보 수정 기능')));
             },
           ),
           _buildMenuDivider(),
@@ -139,9 +135,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.lock_outline,
             title: '비밀번호 변경',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('비밀번호 변경 기능')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('비밀번호 변경 기능')));
             },
           ),
           _buildMenuDivider(),
@@ -184,19 +180,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         children: [
           Padding(
             padding: const EdgeInsets.all(AppDimensions.paddingLarge),
-            child: Text(
-              '앱 정보',
-              style: AppTextStyles.subtitle1,
-            ),
+            child: Text('앱 정보', style: AppTextStyles.subtitle1),
           ),
           _buildMenuItem(
             icon: Icons.info_outline,
             title: '앱 버전',
             subtitle: '1.0.0',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('최신 버전입니다')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('최신 버전입니다')));
             },
           ),
           _buildMenuDivider(),
@@ -204,9 +197,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.star_outline,
             title: '앱 평가하기',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('앱 평가 기능')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('앱 평가 기능')));
             },
           ),
           _buildMenuDivider(),
@@ -214,9 +207,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             icon: Icons.share,
             title: '앱 공유하기',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('앱 공유 기능')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('앱 공유 기능')));
             },
           ),
           _buildMenuDivider(),
@@ -244,15 +237,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         horizontal: AppDimensions.paddingLarge,
         vertical: AppDimensions.paddingSmall,
       ),
-      title: Text(
-        title,
-        style: AppTextStyles.subtitle2,
-      ),
+      title: Text(title, style: AppTextStyles.subtitle2),
       subtitle: Text(
         subtitle,
-        style: AppTextStyles.caption.copyWith(
-          color: AppColors.textSecondary,
-        ),
+        style: AppTextStyles.caption.copyWith(color: AppColors.textSecondary),
       ),
       trailing: Switch(
         value: value,
@@ -282,9 +270,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       ),
       title: Text(
         title,
-        style: AppTextStyles.subtitle2.copyWith(
-          color: textColor,
-        ),
+        style: AppTextStyles.subtitle2.copyWith(color: textColor),
       ),
       subtitle: subtitle != null
           ? Text(
@@ -294,10 +280,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             )
           : null,
-      trailing: Icon(
-        Icons.chevron_right,
-        color: AppColors.textLight,
-      ),
+      trailing: Icon(Icons.chevron_right, color: AppColors.textLight),
       onTap: onTap,
     );
   }
@@ -404,15 +387,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
       log('Starting logout process...');
       await supabase.auth.signOut();
       log('Logout successful');
-      
+
       // 스낵바는 표시하지 않음 (이미 로그인 화면으로 이동했기 때문)
     } catch (e) {
       log('Logout error: $e');
       // 에러 발생시에만 스낵바 표시
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('로그아웃 실패: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('로그아웃 실패: $e')));
       }
     }
   }

@@ -18,7 +18,7 @@ class SearchScreen extends StatefulWidget {
 class _SearchScreenState extends State<SearchScreen> {
   final TextEditingController _searchController = TextEditingController();
   final FocusNode _searchFocusNode = FocusNode();
-  
+
   List<Product> _searchResults = [];
   bool _isSearching = false;
   bool _hasSearched = false;
@@ -95,9 +95,7 @@ class _SearchScreenState extends State<SearchScreen> {
         focusNode: _searchFocusNode,
         decoration: InputDecoration(
           hintText: '찾고 있는 자전거를 검색해보세요',
-          hintStyle: AppTextStyles.body2.copyWith(
-            color: AppColors.textLight,
-          ),
+          hintStyle: AppTextStyles.body2.copyWith(color: AppColors.textLight),
           prefixIcon: const Icon(
             Icons.search,
             color: AppColors.textSecondary,
@@ -165,10 +163,7 @@ class _SearchScreenState extends State<SearchScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            '인기 검색어',
-            style: AppTextStyles.headline3,
-          ),
+          Text('인기 검색어', style: AppTextStyles.headline3),
           const SizedBox(height: AppDimensions.spacingMedium),
           Wrap(
             spacing: AppDimensions.spacingSmall,
@@ -178,10 +173,7 @@ class _SearchScreenState extends State<SearchScreen> {
             }).toList(),
           ),
           const SizedBox(height: AppDimensions.spacingXLarge),
-          Text(
-            '최근 본 상품',
-            style: AppTextStyles.headline3,
-          ),
+          Text('최근 본 상품', style: AppTextStyles.headline3),
           const SizedBox(height: AppDimensions.spacingMedium),
           SizedBox(
             height: AppDimensions.productCardHeight + 20,
@@ -192,27 +184,26 @@ class _SearchScreenState extends State<SearchScreen> {
                     itemCount: _recentProducts.length,
                     itemBuilder: (context, index) {
                       final product = _recentProducts[index];
-                return Container(
-                  margin: const EdgeInsets.only(
-                    right: AppDimensions.marginMedium,
-                  ),
-                  child: ProductCard(
-                    product: product,
-                    type: ProductCardType.grid,
-                    onTap: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (context) => ProductDetailScreen(
-                            productId: product.id,
-                          ),
+                      return Container(
+                        margin: const EdgeInsets.only(
+                          right: AppDimensions.marginMedium,
+                        ),
+                        child: ProductCard(
+                          product: product,
+                          type: ProductCardType.grid,
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ProductDetailScreen(productId: product.id),
+                              ),
+                            );
+                          },
+                          onFavorite: () {
+                            // Handle favorite toggle
+                          },
                         ),
                       );
-                    },
-                    onFavorite: () {
-                      // Handle favorite toggle
-                    },
-                  ),
-                );
                     },
                   ),
           ),
@@ -239,9 +230,7 @@ class _SearchScreenState extends State<SearchScreen> {
         ),
         child: Text(
           text,
-          style: AppTextStyles.body2.copyWith(
-            color: AppColors.textPrimary,
-          ),
+          style: AppTextStyles.body2.copyWith(color: AppColors.textPrimary),
         ),
       ),
     );
@@ -267,36 +256,30 @@ class _SearchScreenState extends State<SearchScreen> {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-          Icon(
-            Icons.search_off,
-            size: 80,
-            color: AppColors.textLight,
-          ),
-          const SizedBox(height: AppDimensions.spacingLarge),
-          Text(
-            '검색 결과가 없습니다',
-            style: AppTextStyles.subtitle1.copyWith(
-              color: AppColors.textSecondary,
+            Icon(Icons.search_off, size: 80, color: AppColors.textLight),
+            const SizedBox(height: AppDimensions.spacingLarge),
+            Text(
+              '검색 결과가 없습니다',
+              style: AppTextStyles.subtitle1.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-          const SizedBox(height: AppDimensions.spacingSmall),
-          Text(
-            '다른 검색어로 시도해보세요',
-            style: AppTextStyles.body2.copyWith(
-              color: AppColors.textLight,
+            const SizedBox(height: AppDimensions.spacingSmall),
+            Text(
+              '다른 검색어로 시도해보세요',
+              style: AppTextStyles.body2.copyWith(color: AppColors.textLight),
             ),
-          ),
-          const SizedBox(height: AppDimensions.spacingXLarge),
-          ElevatedButton(
-            onPressed: () {
-              setState(() {
-                _hasSearched = false;
-                _searchController.clear();
-                _searchResults.clear();
-              });
-            },
-            child: const Text('새로운 검색'),
-          ),
+            const SizedBox(height: AppDimensions.spacingXLarge),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  _hasSearched = false;
+                  _searchController.clear();
+                  _searchResults.clear();
+                });
+              },
+              child: const Text('새로운 검색'),
+            ),
           ],
         ),
       ),
@@ -334,10 +317,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     onPressed: _showFilterModal,
                     child: const Row(
                       mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('필터'),
-                        Icon(Icons.tune, size: 16),
-                      ],
+                      children: [Text('필터'), Icon(Icons.tune, size: 16)],
                     ),
                   ),
                 ],
@@ -365,9 +345,8 @@ class _SearchScreenState extends State<SearchScreen> {
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => ProductDetailScreen(
-                        productId: product.id,
-                      ),
+                      builder: (context) =>
+                          ProductDetailScreen(productId: product.id),
                     ),
                   );
                 },
@@ -392,7 +371,7 @@ class _SearchScreenState extends State<SearchScreen> {
 
     try {
       final results = await ProductService.searchProducts(query);
-      
+
       if (mounted) {
         setState(() {
           _searchResults = results;
@@ -403,8 +382,10 @@ class _SearchScreenState extends State<SearchScreen> {
       // Fallback to dummy data on error
       final results = DummyData.products.where((product) {
         return product.title.toLowerCase().contains(query.toLowerCase()) ||
-               product.description.toLowerCase().contains(query.toLowerCase()) ||
-               _getCategoryName(product.category).toLowerCase().contains(query.toLowerCase());
+            product.description.toLowerCase().contains(query.toLowerCase()) ||
+            _getCategoryName(
+              product.category,
+            ).toLowerCase().contains(query.toLowerCase());
       }).toList();
 
       if (mounted) {
@@ -436,15 +417,9 @@ class _SearchScreenState extends State<SearchScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              '필터',
-              style: AppTextStyles.headline3,
-            ),
+            Text('필터', style: AppTextStyles.headline3),
             const SizedBox(height: AppDimensions.spacingLarge),
-            Text(
-              '카테고리',
-              style: AppTextStyles.subtitle1,
-            ),
+            Text('카테고리', style: AppTextStyles.subtitle1),
             const SizedBox(height: AppDimensions.spacingMedium),
             Wrap(
               spacing: AppDimensions.spacingSmall,
@@ -454,10 +429,7 @@ class _SearchScreenState extends State<SearchScreen> {
               }).toList(),
             ),
             const SizedBox(height: AppDimensions.spacingLarge),
-            Text(
-              '가격대',
-              style: AppTextStyles.subtitle1,
-            ),
+            Text('가격대', style: AppTextStyles.subtitle1),
             const SizedBox(height: AppDimensions.spacingMedium),
             Wrap(
               spacing: AppDimensions.spacingSmall,
@@ -522,15 +494,24 @@ class _SearchScreenState extends State<SearchScreen> {
 
   String _getCategoryName(String categoryId) {
     switch (categoryId) {
-      case 'road': return '로드바이크';
-      case 'mtb': return 'MTB';
-      case 'hybrid': return '하이브리드';
-      case 'folding': return '접이식';
-      case 'electric': return '전기자전거';
-      case 'bmx': return 'BMX';
-      case 'city': return '시티바이크';
-      case 'kids': return '어린이용';
-      default: return '기타';
+      case 'road':
+        return '로드바이크';
+      case 'mtb':
+        return 'MTB';
+      case 'hybrid':
+        return '하이브리드';
+      case 'folding':
+        return '접이식';
+      case 'electric':
+        return '전기자전거';
+      case 'bmx':
+        return 'BMX';
+      case 'city':
+        return '시티바이크';
+      case 'kids':
+        return '어린이용';
+      default:
+        return '기타';
     }
   }
 }

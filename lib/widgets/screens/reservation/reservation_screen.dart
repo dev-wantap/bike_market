@@ -24,11 +24,7 @@ class _ReservationScreenState extends State<ReservationScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.calendar_today,
-              size: 80,
-              color: AppColors.textLight,
-            ),
+            Icon(Icons.calendar_today, size: 80, color: AppColors.textLight),
             SizedBox(height: AppDimensions.spacingLarge),
             Text(
               '예약 기능 준비 중입니다',

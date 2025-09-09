@@ -7,11 +7,7 @@ class CategoryItem extends StatelessWidget {
   final Category category;
   final VoidCallback? onTap;
 
-  const CategoryItem({
-    super.key,
-    required this.category,
-    this.onTap,
-  });
+  const CategoryItem({super.key, required this.category, this.onTap});
 
   @override
   Widget build(BuildContext context) {

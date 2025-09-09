@@ -29,6 +29,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Product? _product;
   bool _isLoading = true;
   String? _error;
+  bool _isOwner = false;
 
   @override
   void initState() {
@@ -39,9 +40,16 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Future<void> _fetchProductDetails() async {
     try {
       final product = await ProductService.getProductDetails(widget.productId);
+
+      // Check if current user is the owner
+      final currentUser = supabase.auth.currentUser;
+      final isOwner =
+          currentUser != null && currentUser.id == product.seller.id;
+
       setState(() {
         _product = product;
         _isFavorite = product.isFavorite;
+        _isOwner = isOwner;
         _isLoading = false;
       });
 
@@ -501,45 +509,73 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         color: AppColors.surface,
         border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
       ),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () {
-              setState(() {
-                _isFavorite = !_isFavorite;
-              });
-            },
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                border: Border.all(color: AppColors.border),
-                borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-              ),
-              child: Icon(
-                _isFavorite ? Icons.favorite : Icons.favorite_border,
-                color: _isFavorite ? AppColors.error : AppColors.textSecondary,
-              ),
+      child: _isOwner ? _buildOwnerActions() : _buildBuyerActions(),
+    );
+  }
+
+  Widget _buildOwnerActions() {
+    return Row(
+      children: [
+        Expanded(
+          child: OutlinedButton(
+            onPressed: _editProduct,
+            child: const Text('상품 수정'),
+          ),
+        ),
+        const SizedBox(width: AppDimensions.spacingMedium),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: _deleteProduct,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.error,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('삭제'),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBuyerActions() {
+    return Row(
+      children: [
+        GestureDetector(
+          onTap: () {
+            setState(() {
+              _isFavorite = !_isFavorite;
+            });
+          },
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              border: Border.all(color: AppColors.border),
+              borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+            ),
+            child: Icon(
+              _isFavorite ? Icons.favorite : Icons.favorite_border,
+              color: _isFavorite ? AppColors.error : AppColors.textSecondary,
             ),
           ),
-          const SizedBox(width: AppDimensions.spacingMedium),
-          Expanded(
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ChatRoomScreen(
-                      product: _product!,
-                      otherUser: _product!.seller,
-                    ),
+        ),
+        const SizedBox(width: AppDimensions.spacingMedium),
+        Expanded(
+          child: ElevatedButton(
+            onPressed: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => ChatRoomScreen(
+                    product: _product!,
+                    otherUser: _product!.seller,
                   ),
-                );
-              },
-              child: const Text('채팅하기'),
-            ),
+                ),
+              );
+            },
+            child: const Text('채팅하기'),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -619,5 +655,92 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       default:
         return '기타';
     }
+  }
+
+  void _editProduct() {
+    // TODO: Navigate to AddProductScreen with edit mode
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text('상품 수정 기능은 개발 중입니다'),
+        backgroundColor: AppColors.info,
+      ),
+    );
+  }
+
+  void _deleteProduct() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('상품 삭제'),
+          content: Text(
+            '정말로 "${_product!.title}" 상품을 삭제하시겠습니까?\n\n삭제된 상품은 복구할 수 없습니다.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('취소'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.of(context).pop(); // 팝업 먼저 닫기
+
+                try {
+                  log('Attempting to delete product ID: ${_product!.id}');
+                  
+                  // Show loading
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => const Center(child: CircularProgressIndicator()),
+                  );
+
+                  // ProductService의 deleteProduct 호출
+                  await ProductService.deleteProduct(_product!.id);
+                  
+                  log('Product deletion successful on client-side.');
+
+                  if (mounted) {
+                    // Hide loading dialog
+                    Navigator.of(context).pop();
+                    
+                    // 홈으로 이동
+                    Navigator.of(context).popUntil((route) => route.isFirst);
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: const Text('상품이 삭제되었습니다.'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+                  }
+
+                } catch (e) {
+                  // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                  // 이 로그를 확인하는 것이 가장 중요합니다!
+                  // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
+                  log('🔥🔥🔥 Product deletion failed: $e');
+                  
+                  if (mounted) {
+                    // Hide loading dialog if it's showing
+                    if (Navigator.canPop(context)) {
+                      Navigator.of(context).pop();
+                    }
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('삭제에 실패했습니다: ${e.toString()}'),
+                        backgroundColor: AppColors.error,
+                      ),
+                    );
+                  }
+                }
+              },
+              child: const Text('삭제'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }

@@ -15,7 +15,7 @@ import '../category_products/category_products_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final VoidCallback? onRefresh;
-  
+
   const HomeScreen({super.key, this.onRefresh});
 
   @override
@@ -42,23 +42,27 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       final popularFuture = ProductService.getPopularProducts();
       final recentFuture = ProductService.getRecentProducts();
-      
+
       final popular = await popularFuture;
       final recent = await recentFuture;
-      
-      setState(() {
-        _popularProducts = popular;
-        _recentProducts = recent;
-        _isLoadingPopular = false;
-        _isLoadingRecent = false;
-      });
+
+      if (mounted) {
+        setState(() {
+          _popularProducts = popular;
+          _recentProducts = recent;
+          _isLoadingPopular = false;
+          _isLoadingRecent = false;
+        });
+      }
     } catch (e) {
-      setState(() {
-        _popularProducts = DummyData.popularProducts;
-        _recentProducts = DummyData.recentProducts;
-        _isLoadingPopular = false;
-        _isLoadingRecent = false;
-      });
+      if (mounted) {
+        setState(() {
+          _popularProducts = DummyData.popularProducts;
+          _recentProducts = DummyData.recentProducts;
+          _isLoadingPopular = false;
+          _isLoadingRecent = false;
+        });
+      }
     }
   }
 
@@ -67,11 +71,9 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       appBar: CustomAppBar.home(
         onSearchTap: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (context) => const SearchScreen(),
-            ),
-          );
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (context) => const SearchScreen()));
         },
         onNotificationTap: () {
           // Handle notification tap
@@ -153,9 +155,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: AppDimensions.spacingSmall),
                 Text(
                   banner.subtitle,
-                  style: AppTextStyles.body2.copyWith(
-                    color: Colors.white70,
-                  ),
+                  style: AppTextStyles.body2.copyWith(color: Colors.white70),
                 ),
               ],
             ),
@@ -173,10 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.paddingMedium,
           ),
-          child: Text(
-            '카테고리',
-            style: AppTextStyles.headline3,
-          ),
+          child: Text('카테고리', style: AppTextStyles.headline3),
         ),
         const SizedBox(height: AppDimensions.spacingMedium),
         GridView.builder(
@@ -222,19 +219,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '인기 상품',
-                style: AppTextStyles.headline3,
-              ),
+              Text('인기 상품', style: AppTextStyles.headline3),
               TextButton(
                 onPressed: () {
                   // Handle see more
                 },
                 child: Text(
                   '더보기',
-                  style: AppTextStyles.body2.copyWith(
-                    color: AppColors.primary,
-                  ),
+                  style: AppTextStyles.body2.copyWith(color: AppColors.primary),
                 ),
               ),
             ],
@@ -263,9 +255,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => ProductDetailScreen(
-                                productId: product.id,
-                              ),
+                              builder: (context) =>
+                                  ProductDetailScreen(productId: product.id),
                             ),
                           );
                         },
@@ -292,19 +283,14 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                '최근 등록된 상품',
-                style: AppTextStyles.headline3,
-              ),
+              Text('최근 등록된 상품', style: AppTextStyles.headline3),
               TextButton(
                 onPressed: () {
                   // Handle see more
                 },
                 child: Text(
                   '더보기',
-                  style: AppTextStyles.body2.copyWith(
-                    color: AppColors.primary,
-                  ),
+                  style: AppTextStyles.body2.copyWith(color: AppColors.primary),
                 ),
               ),
             ],
@@ -325,9 +311,8 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => ProductDetailScreen(
-                            productId: product.id,
-                          ),
+                          builder: (context) =>
+                              ProductDetailScreen(productId: product.id),
                         ),
                       );
                     },

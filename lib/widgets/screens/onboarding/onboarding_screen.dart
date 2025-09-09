@@ -42,13 +42,9 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       duration: const Duration(milliseconds: 500),
       vsync: this,
     );
-    _fadeAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _animationController,
-      curve: Curves.easeInOut,
-    ));
+    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
     _animationController.forward();
   }
 
@@ -113,7 +109,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                         )
                       else
                         const SizedBox.shrink(),
-                      
+
                       ElevatedButton(
                         onPressed: _currentPage < _pages.length - 1
                             ? _nextPage
@@ -146,9 +142,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
 
   void _goToMain() {
     Navigator.of(context).pushReplacement(
-      MaterialPageRoute(
-        builder: (context) => const MainNavigation(),
-      ),
+      MaterialPageRoute(builder: (context) => const MainNavigation()),
     );
   }
 

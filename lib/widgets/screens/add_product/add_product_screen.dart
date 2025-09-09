@@ -16,10 +16,7 @@ class AddProductScreen extends StatelessWidget {
         child: Text(
           '상품 등록 화면\n곧 완성될 예정입니다!',
           textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 18,
-            color: AppColors.textSecondary,
-          ),
+          style: TextStyle(fontSize: 18, color: AppColors.textSecondary),
         ),
       ),
     );

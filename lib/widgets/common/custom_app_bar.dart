@@ -29,41 +29,38 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
     this.onMorePressed,
   });
 
-  const CustomAppBar.home({
-    super.key,
-    this.onSearchTap,
-    this.onNotificationTap,
-  })  : type = AppBarType.home,
-        title = null,
-        leading = null,
-        actions = null,
-        onBackPressed = null,
-        onSharePressed = null,
-        onMorePressed = null;
+  const CustomAppBar.home({super.key, this.onSearchTap, this.onNotificationTap})
+    : type = AppBarType.home,
+      title = null,
+      leading = null,
+      actions = null,
+      onBackPressed = null,
+      onSharePressed = null,
+      onMorePressed = null;
 
   const CustomAppBar.detail({
     super.key,
     this.onBackPressed,
     this.onSharePressed,
     this.onMorePressed,
-  })  : type = AppBarType.detail,
-        title = null,
-        leading = null,
-        actions = null,
-        onSearchTap = null,
-        onNotificationTap = null;
+  }) : type = AppBarType.detail,
+       title = null,
+       leading = null,
+       actions = null,
+       onSearchTap = null,
+       onNotificationTap = null;
 
   const CustomAppBar.simple({
     super.key,
     required this.title,
     this.leading,
     this.actions,
-  })  : type = AppBarType.simple,
-        onSearchTap = null,
-        onNotificationTap = null,
-        onBackPressed = null,
-        onSharePressed = null,
-        onMorePressed = null;
+  }) : type = AppBarType.simple,
+       onSearchTap = null,
+       onNotificationTap = null,
+       onBackPressed = null,
+       onSharePressed = null,
+       onMorePressed = null;
 
   @override
   Widget build(BuildContext context) {
@@ -101,10 +98,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       actions: [
         IconButton(
           onPressed: onSearchTap,
-          icon: const Icon(
-            Icons.search,
-            color: AppColors.textPrimary,
-          ),
+          icon: const Icon(Icons.search, color: AppColors.textPrimary),
         ),
         IconButton(
           onPressed: onNotificationTap,
@@ -140,25 +134,16 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       leading: IconButton(
         onPressed: onBackPressed ?? () => Navigator.of(context).pop(),
-        icon: const Icon(
-          Icons.arrow_back,
-          color: AppColors.textPrimary,
-        ),
+        icon: const Icon(Icons.arrow_back, color: AppColors.textPrimary),
       ),
       actions: [
         IconButton(
           onPressed: onSharePressed,
-          icon: const Icon(
-            Icons.share,
-            color: AppColors.textPrimary,
-          ),
+          icon: const Icon(Icons.share, color: AppColors.textPrimary),
         ),
         IconButton(
           onPressed: onMorePressed,
-          icon: const Icon(
-            Icons.more_vert,
-            color: AppColors.textPrimary,
-          ),
+          icon: const Icon(Icons.more_vert, color: AppColors.textPrimary),
         ),
       ],
     );
@@ -170,10 +155,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       elevation: 0,
       leading: leading,
       title: title != null
-          ? Text(
-              title!,
-              style: AppTextStyles.headline3,
-            )
+          ? Text(title!, style: AppTextStyles.headline3)
           : null,
       actions: actions,
     );

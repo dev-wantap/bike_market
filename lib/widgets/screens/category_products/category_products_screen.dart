@@ -28,7 +28,9 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   Future<void> _fetchCategoryProducts() async {
     try {
-      final products = await ProductService.getProductsByCategory(widget.category.id);
+      final products = await ProductService.getProductsByCategory(
+        widget.category.id,
+      );
       setState(() {
         _products = products;
         _isLoading = false;
@@ -45,43 +47,37 @@ class _CategoryProductsScreenState extends State<CategoryProductsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.category.name),
-      ),
+      appBar: AppBar(title: Text(widget.category.name)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _products.isEmpty
-              ? const Center(
-                  child: Text('이 카테고리에는 아직 상품이 없습니다.'),
-                )
-              : GridView.builder(
-                  padding: const EdgeInsets.all(AppDimensions.paddingMedium),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    childAspectRatio: 0.7,
-                    crossAxisSpacing: AppDimensions.spacingMedium,
-                    mainAxisSpacing: AppDimensions.spacingMedium,
-                  ),
-                  itemCount: _products.length,
-                  itemBuilder: (context, index) {
-                    final product = _products[index];
-                    return ProductCard(
-                      product: product,
-                      type: ProductCardType.grid,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (context) => ProductDetailScreen(
-                              productId: product.id,
-                            ),
-                          ),
-                        );
-                      },
+          ? const Center(child: Text('이 카테고리에는 아직 상품이 없습니다.'))
+          : GridView.builder(
+              padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.7,
+                crossAxisSpacing: AppDimensions.spacingMedium,
+                mainAxisSpacing: AppDimensions.spacingMedium,
+              ),
+              itemCount: _products.length,
+              itemBuilder: (context, index) {
+                final product = _products[index];
+                return ProductCard(
+                  product: product,
+                  type: ProductCardType.grid,
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            ProductDetailScreen(productId: product.id),
+                      ),
                     );
                   },
-                ),
+                );
+              },
+            ),
     );
   }
 }

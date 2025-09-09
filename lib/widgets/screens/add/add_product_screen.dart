@@ -12,7 +12,7 @@ import '../../../data/models/product.dart';
 
 class AddProductScreen extends StatefulWidget {
   final VoidCallback? onProductAdded;
-  
+
   const AddProductScreen({super.key, this.onProductAdded});
 
   @override
@@ -24,21 +24,29 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
   final _locationController = TextEditingController();
-  
+
   final _formKey = GlobalKey<FormState>();
-  
+
   String _selectedCategory = '';
   String _selectedCondition = '좋음';
   bool _isNegotiable = false;
   final List<File> _selectedImages = [];
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
-  
+
   final List<String> _categories = [
-    '로드바이크', '산악자전거', '하이브리드', '접이식자전거', '전기자전거', 
-    '미니벨로', '픽시', '커스텀', '부품', '기타'
+    '로드바이크',
+    '산악자전거',
+    '하이브리드',
+    '접이식자전거',
+    '전기자전거',
+    '미니벨로',
+    '픽시',
+    '커스텀',
+    '부품',
+    '기타',
   ];
-  
+
   final List<String> _conditions = ['새상품', '좋음', '보통', '나쁨'];
 
   @override
@@ -52,9 +60,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Future<void> _pickImage() async {
     if (_selectedImages.length >= 5) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('최대 5장까지 선택할 수 있습니다.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('최대 5장까지 선택할 수 있습니다.')));
       return;
     }
 
@@ -101,9 +109,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('이미지 선택 중 오류가 발생했습니다: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('이미지 선택 중 오류가 발생했습니다: $e')));
     }
   }
 
@@ -121,27 +129,26 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
     int maxRetries = 3;
     int retryCount = 0;
-    
+
     while (retryCount < maxRetries) {
       try {
         await Supabase.instance.client.storage
             .from('product-images')
             .upload(filePath, imageFile);
-        
+
         return Supabase.instance.client.storage
             .from('product-images')
             .getPublicUrl(filePath);
-            
       } catch (e) {
         retryCount++;
         if (retryCount >= maxRetries) {
           throw Exception('이미지 업로드 실패 (${maxRetries}회 시도): ${e.toString()}');
         }
-        
+
         await Future.delayed(Duration(seconds: retryCount * 2));
       }
     }
-    
+
     throw Exception('이미지 업로드 실패');
   }
 
@@ -156,7 +163,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         actions: [
           TextButton(
             onPressed: _isUploading ? null : _submitProduct,
-            child: _isUploading 
+            child: _isUploading
                 ? const SizedBox(
                     width: 16,
                     height: 16,
@@ -209,10 +216,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           children: [
             Row(
               children: [
-                Text(
-                  '상품 사진',
-                  style: AppTextStyles.subtitle1,
-                ),
+                Text('상품 사진', style: AppTextStyles.subtitle1),
                 const SizedBox(width: AppDimensions.spacingSmall),
                 Container(
                   padding: const EdgeInsets.symmetric(
@@ -221,7 +225,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.error,
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusSmall,
+                    ),
                   ),
                   child: const Text(
                     '필수',
@@ -250,7 +256,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 itemBuilder: (context, index) {
                   return Container(
                     width: 100,
-                    margin: const EdgeInsets.only(right: AppDimensions.marginSmall),
+                    margin: const EdgeInsets.only(
+                      right: AppDimensions.marginSmall,
+                    ),
                     child: _buildImageSlot(index),
                   );
                 },
@@ -264,7 +272,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Widget _buildImageSlot(int index) {
     final hasImage = index < _selectedImages.length;
-    
+
     return GestureDetector(
       onTap: hasImage ? () => _removeImage(index) : _pickImage,
       child: Container(
@@ -280,7 +288,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
             ? Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusSmall,
+                    ),
                     child: Image.file(
                       _selectedImages[index],
                       width: double.infinity,
@@ -331,7 +341,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Widget _buildFormSection() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.marginMedium),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.marginMedium,
+      ),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
@@ -434,17 +446,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
       children: [
         Row(
           children: [
-            Text(
-              label,
-              style: AppTextStyles.subtitle2,
-            ),
+            Text(label, style: AppTextStyles.subtitle2),
             if (required) ...[
               const SizedBox(width: AppDimensions.spacingXSmall),
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 4,
-                  vertical: 1,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
                   color: AppColors.error,
                   borderRadius: BorderRadius.circular(2),
@@ -496,16 +502,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
       children: [
         Row(
           children: [
-            Text(
-              '카테고리',
-              style: AppTextStyles.subtitle2,
-            ),
+            Text('카테고리', style: AppTextStyles.subtitle2),
             const SizedBox(width: AppDimensions.spacingXSmall),
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 4,
-                vertical: 1,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
               decoration: BoxDecoration(
                 color: AppColors.error,
                 borderRadius: BorderRadius.circular(2),
@@ -543,13 +543,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   border: Border.all(
                     color: isSelected ? AppColors.primary : AppColors.divider,
                   ),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusLarge,
+                  ),
                 ),
                 child: Text(
                   category,
                   style: AppTextStyles.caption.copyWith(
                     color: isSelected ? Colors.white : AppColors.textSecondary,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontWeight: isSelected
+                        ? FontWeight.bold
+                        : FontWeight.normal,
                   ),
                 ),
               ),
@@ -564,10 +568,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '상품 상태',
-          style: AppTextStyles.subtitle2,
-        ),
+        Text('상품 상태', style: AppTextStyles.subtitle2),
         const SizedBox(height: AppDimensions.spacingSmall),
         Row(
           children: _conditions.map((condition) {
@@ -580,7 +581,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   });
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(right: AppDimensions.marginXSmall),
+                  margin: const EdgeInsets.only(
+                    right: AppDimensions.marginXSmall,
+                  ),
                   padding: const EdgeInsets.symmetric(
                     vertical: AppDimensions.paddingMedium,
                   ),
@@ -589,14 +592,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
                     border: Border.all(
                       color: isSelected ? AppColors.primary : AppColors.divider,
                     ),
-                    borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                    borderRadius: BorderRadius.circular(
+                      AppDimensions.radiusSmall,
+                    ),
                   ),
                   child: Text(
                     condition,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.caption.copyWith(
-                      color: isSelected ? Colors.white : AppColors.textSecondary,
-                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      color: isSelected
+                          ? Colors.white
+                          : AppColors.textSecondary,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -612,10 +621,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          '가격 제안 받기',
-          style: AppTextStyles.subtitle2,
-        ),
+        Text('가격 제안 받기', style: AppTextStyles.subtitle2),
         Switch(
           value: _isNegotiable,
           onChanged: (value) {
@@ -630,10 +636,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-
   Future<void> _submitProduct() async {
     log('=== _submitProduct 시작 ===');
-    
+
     if (!_formKey.currentState!.validate()) {
       log('폼 검증 실패');
       return;
@@ -649,7 +654,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       );
       return;
     }
-    
+
     if (_selectedCategory.isEmpty) {
       log('카테고리 선택 안함');
       ScaffoldMessenger.of(context).showSnackBar(
@@ -685,7 +690,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
       // 카테고리 매핑
       final categoryMap = {
         '로드바이크': 'road',
-        '산악자전거': 'mtb', 
+        '산악자전거': 'mtb',
         '하이브리드': 'hybrid',
         '접이식자전거': 'folding',
         '전기자전거': 'electric',
@@ -723,7 +728,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       if (mounted) {
         log('상품 등록 성공 - 화면 이동');
-        
+
         // 상품 등록 성공 알림
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -731,7 +736,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
             backgroundColor: AppColors.success,
           ),
         );
-        
+
         // 폼 초기화
         _titleController.clear();
         _descriptionController.clear();
@@ -742,7 +747,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
           _selectedCategory = '';
           _isNegotiable = false;
         });
-        
+
         // 홈으로 이동
         widget.onProductAdded?.call();
       }
@@ -768,7 +773,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
   Future<void> _insertProduct(Product product) async {
     final supabase = Supabase.instance.client;
-    
+
     await supabase.from('products').insert({
       'seller_id': product.seller.id,
       'title': product.title,
@@ -795,14 +800,14 @@ class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
 
     // Remove all non-digit characters
     String digits = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
-    
+
     if (digits.isEmpty) {
       return const TextEditingValue();
     }
 
     // Format with commas
     String formatted = _addCommas(digits);
-    
+
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),

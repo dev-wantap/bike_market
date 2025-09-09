@@ -12,7 +12,7 @@ void main() async {
     url: dotenv.env['SUPABASE_URL']!,
     anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
-  
+
   // Deep link 처리를 위한 Auth callback 설정
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
     final AuthChangeEvent event = data.event;
@@ -20,7 +20,7 @@ void main() async {
       log('User signed in: ${data.session?.user.email}');
     }
   });
-  
+
   runApp(const BikeMarketApp());
 }
 

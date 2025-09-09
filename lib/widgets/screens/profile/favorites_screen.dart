@@ -46,12 +46,13 @@ class FavoritesScreen extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                       horizontal: AppDimensions.paddingMedium,
                     ),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: AppDimensions.spacingMedium,
-                      mainAxisSpacing: AppDimensions.spacingMedium,
-                    ),
+                    gridDelegate:
+                        const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          childAspectRatio: 0.7,
+                          crossAxisSpacing: AppDimensions.spacingMedium,
+                          mainAxisSpacing: AppDimensions.spacingMedium,
+                        ),
                     itemCount: favoriteProducts.length,
                     itemBuilder: (context, index) {
                       final product = favoriteProducts[index];
@@ -61,9 +62,8 @@ class FavoritesScreen extends StatelessWidget {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) => ProductDetailScreen(
-                                productId: product.id,
-                              ),
+                              builder: (context) =>
+                                  ProductDetailScreen(productId: product.id),
                             ),
                           );
                         },
@@ -86,25 +86,19 @@ class FavoritesScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
           children: [
-          Icon(
-            Icons.favorite_border,
-            size: 80,
-            color: AppColors.textLight,
-          ),
-          const SizedBox(height: AppDimensions.spacingLarge),
-          Text(
-            '찜한 상품이 없습니다',
-            style: AppTextStyles.subtitle1.copyWith(
-              color: AppColors.textSecondary,
+            Icon(Icons.favorite_border, size: 80, color: AppColors.textLight),
+            const SizedBox(height: AppDimensions.spacingLarge),
+            Text(
+              '찜한 상품이 없습니다',
+              style: AppTextStyles.subtitle1.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
-          ),
-          const SizedBox(height: AppDimensions.spacingSmall),
-          Text(
-            '마음에 드는 상품을 찜해보세요',
-            style: AppTextStyles.body2.copyWith(
-              color: AppColors.textLight,
+            const SizedBox(height: AppDimensions.spacingSmall),
+            Text(
+              '마음에 드는 상품을 찜해보세요',
+              style: AppTextStyles.body2.copyWith(color: AppColors.textLight),
             ),
-          ),
           ],
         ),
       ),
@@ -125,9 +119,9 @@ class FavoritesScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('찜 목록에서 제거되었습니다')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('찜 목록에서 제거되었습니다')));
             },
             child: const Text('제거'),
           ),
@@ -150,9 +144,9 @@ class FavoritesScreen extends StatelessWidget {
           ElevatedButton(
             onPressed: () {
               Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('모든 찜 상품이 삭제되었습니다')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(const SnackBar(content: Text('모든 찜 상품이 삭제되었습니다')));
             },
             child: const Text('삭제'),
           ),
