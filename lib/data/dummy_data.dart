@@ -49,52 +49,64 @@ class DummyData {
   // Categories
   static const List<Category> categories = [
     Category(
-      id: 'road',
-      name: '로드바이크',
-      icon: Icons.directions_bike,
-      color: AppColors.primary,
-    ),
-    Category(
       id: 'mtb',
       name: 'MTB',
       icon: Icons.terrain,
+      color: AppColors.primary,
+    ),
+    Category(
+      id: 'road',
+      name: '로드싸이클',
+      icon: Icons.directions_bike,
       color: AppColors.secondary,
     ),
     Category(
-      id: 'hybrid',
-      name: '하이브리드',
-      icon: Icons.pedal_bike,
+      id: 'tt',
+      name: 'TT&철인',
+      icon: Icons.speed,
       color: AppColors.warning,
     ),
     Category(
-      id: 'folding',
-      name: '접이식',
-      icon: Icons.unfold_less,
+      id: 'gravel',
+      name: '그래블',
+      icon: Icons.landscape,
       color: AppColors.error,
+    ),
+    Category(
+      id: 'minivelo',
+      name: '미니벨로',
+      icon: Icons.unfold_less,
+      color: AppColors.info,
+    ),
+    Category(
+      id: 'fixie',
+      name: '픽시',
+      icon: Icons.radio_button_unchecked,
+      color: Colors.purple,
     ),
     Category(
       id: 'electric',
       name: '전기자전거',
       icon: Icons.electric_bike,
-      color: AppColors.info,
-    ),
-    Category(
-      id: 'bmx',
-      name: 'BMX',
-      icon: Icons.sports_motorsports,
-      color: Colors.purple,
-    ),
-    Category(
-      id: 'city',
-      name: '시티바이크',
-      icon: Icons.location_city,
       color: Colors.teal,
     ),
     Category(
       id: 'kids',
-      name: '어린이용',
+      name: '키즈&주니어',
       icon: Icons.child_friendly,
       color: Colors.pink,
+    ),
+    Category(
+      id: 'special',
+      name: '특수자전거',
+      icon: Icons.settings,
+      color: Colors.brown,
+    ),
+    Category(
+      id: 'city',
+      name: '생활 자전거',
+      icon: Icons.pedal_bike,
+      color: Colors.orange,
     ),
   ];
 

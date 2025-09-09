@@ -62,7 +62,7 @@ class FavoritesScreen extends StatelessWidget {
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (context) => ProductDetailScreen(
-                                product: product,
+                                productId: product.id,
                               ),
                             ),
                           );

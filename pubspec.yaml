@@ -1,5 +1,5 @@
 name: bike_market
-description: "BikeMarket - 중고 자전거 거래 앱 UI 프로토타입"
+description: "CycleLink - 중고 자전거 거래 앱 UI 프로토타입"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -44,6 +44,8 @@ dependencies:
   flutter_dotenv: ^6.0.0
   change_app_package_name: ^1.5.0
   url_launcher: ^6.3.1
+  image_picker: ^1.2.0
+  flutter_image_compress: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -55,6 +57,7 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
+  flutter_launcher_icons: ^0.13.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -70,8 +73,24 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - .env
+    - assets/images/
   #   - images/a_dot_burr.jpeg
   #   - images/a_dot_ham.jpeg
+
+flutter_launcher_icons:
+  android: "launcher_icon"
+  ios: true
+  image_path: "assets/images/app_icon.png"
+  min_sdk_android: 21 # Android min SDK
+  web:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+    background_color: "#296AA8"
+    theme_color: "#296AA8"
+  windows:
+    generate: true
+    image_path: "assets/images/app_icon.png"
+    icon_size: 48
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

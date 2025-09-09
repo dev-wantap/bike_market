@@ -81,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen>
                   ),
                   const SizedBox(height: AppDimensions.spacingLarge),
                   const Text(
-                    'BikeMarket',
+                    'CycleLink',
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,

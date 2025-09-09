@@ -4,6 +4,7 @@ import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/dummy_data.dart';
 import '../../../data/models/product.dart';
+import '../../../data/services/product_service.dart';
 import '../../common/product_card.dart';
 import '../product_detail/product_detail_screen.dart';
 
@@ -21,6 +22,8 @@ class _SearchScreenState extends State<SearchScreen> {
   List<Product> _searchResults = [];
   bool _isSearching = false;
   bool _hasSearched = false;
+  List<Product> _recentProducts = [];
+  bool _isLoadingRecent = true;
 
   final List<String> _popularSearches = [
     '로드바이크',
@@ -34,6 +37,27 @@ class _SearchScreenState extends State<SearchScreen> {
     '트렉',
     'Specialized',
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRecentProducts();
+  }
+
+  Future<void> _loadRecentProducts() async {
+    try {
+      final recent = await ProductService.getRecentProducts();
+      setState(() {
+        _recentProducts = recent;
+        _isLoadingRecent = false;
+      });
+    } catch (e) {
+      setState(() {
+        _recentProducts = DummyData.popularProducts; // fallback
+        _isLoadingRecent = false;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -161,11 +185,13 @@ class _SearchScreenState extends State<SearchScreen> {
           const SizedBox(height: AppDimensions.spacingMedium),
           SizedBox(
             height: AppDimensions.productCardHeight + 20,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              itemCount: DummyData.popularProducts.length,
-              itemBuilder: (context, index) {
-                final product = DummyData.popularProducts[index];
+            child: _isLoadingRecent
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: _recentProducts.length,
+                    itemBuilder: (context, index) {
+                      final product = _recentProducts[index];
                 return Container(
                   margin: const EdgeInsets.only(
                     right: AppDimensions.marginMedium,
@@ -177,7 +203,7 @@ class _SearchScreenState extends State<SearchScreen> {
                       Navigator.of(context).push(
                         MaterialPageRoute(
                           builder: (context) => ProductDetailScreen(
-                            product: product,
+                            productId: product.id,
                           ),
                         ),
                       );
@@ -187,8 +213,8 @@ class _SearchScreenState extends State<SearchScreen> {
                     },
                   ),
                 );
-              },
-            ),
+                    },
+                  ),
           ),
         ],
       ),
@@ -340,7 +366,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   Navigator.of(context).push(
                     MaterialPageRoute(
                       builder: (context) => ProductDetailScreen(
-                        product: product,
+                        productId: product.id,
                       ),
                     ),
                   );
@@ -356,7 +382,7 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void _performSearch(String query) {
+  Future<void> _performSearch(String query) async {
     if (query.trim().isEmpty) return;
 
     setState(() {
@@ -364,8 +390,17 @@ class _SearchScreenState extends State<SearchScreen> {
       _hasSearched = true;
     });
 
-    // Simulate search delay
-    Future.delayed(const Duration(milliseconds: 500), () {
+    try {
+      final results = await ProductService.searchProducts(query);
+      
+      if (mounted) {
+        setState(() {
+          _searchResults = results;
+          _isSearching = false;
+        });
+      }
+    } catch (e) {
+      // Fallback to dummy data on error
       final results = DummyData.products.where((product) {
         return product.title.toLowerCase().contains(query.toLowerCase()) ||
                product.description.toLowerCase().contains(query.toLowerCase()) ||
@@ -378,7 +413,7 @@ class _SearchScreenState extends State<SearchScreen> {
           _isSearching = false;
         });
       }
-    });
+    }
 
     _searchFocusNode.unfocus();
   }

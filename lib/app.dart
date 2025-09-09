@@ -8,7 +8,7 @@ class BikeMarketApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'BikeMarket',
+      title: 'CycleLink',
       theme: AppTheme.lightTheme,
       home: const AuthGate(),
       debugShowCheckedModeBanner: false,

@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/models/product.dart';
+import '../../../data/services/product_service.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../chat/chat_room_screen.dart';
 
 class ProductDetailScreen extends StatefulWidget {
-  final Product product;
+  final String productId;
 
   const ProductDetailScreen({
     super.key,
-    required this.product,
+    required this.productId,
   });
 
   @override
@@ -24,11 +26,30 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   int _currentImageIndex = 0;
   bool _isFavorite = false;
   bool _isDescriptionExpanded = false;
+  Product? _product;
+  bool _isLoading = true;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _isFavorite = widget.product.isFavorite;
+    _fetchProductDetails();
+  }
+
+  Future<void> _fetchProductDetails() async {
+    try {
+      final product = await ProductService.getProductDetails(widget.productId);
+      setState(() {
+        _product = product;
+        _isFavorite = product.isFavorite;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
   }
 
   @override
@@ -52,34 +73,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           _showMoreMenu(context);
         },
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  _buildImageSlider(),
-                  const SizedBox(height: AppDimensions.spacingMedium),
-                  _buildProductInfo(),
-                  const SizedBox(height: AppDimensions.spacingLarge),
-                  _buildSellerInfo(),
-                  const SizedBox(height: AppDimensions.spacingLarge),
-                  _buildOtherProducts(),
-                  const SizedBox(height: AppDimensions.spacingXXLarge),
-                ],
-              ),
-            ),
-          ),
-          _buildBottomActions(),
-        ],
-      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.error, size: 64, color: AppColors.error),
+                      const SizedBox(height: AppDimensions.spacingMedium),
+                      Text(_error!, style: AppTextStyles.body2),
+                      const SizedBox(height: AppDimensions.spacingMedium),
+                      ElevatedButton(
+                        onPressed: _fetchProductDetails,
+                        child: const Text('다시 시도'),
+                      ),
+                    ],
+                  ),
+                )
+              : _product == null
+                  ? const Center(child: Text('상품을 찾을 수 없습니다'))
+                  : Column(
+                      children: [
+                        Expanded(
+                          child: SingleChildScrollView(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                _buildImageSlider(),
+                                const SizedBox(height: AppDimensions.spacingMedium),
+                                _buildProductInfo(),
+                                const SizedBox(height: AppDimensions.spacingLarge),
+                                _buildSellerInfo(),
+                                const SizedBox(height: AppDimensions.spacingLarge),
+                                _buildOtherProducts(),
+                                const SizedBox(height: AppDimensions.spacingXXLarge),
+                              ],
+                            ),
+                          ),
+                        ),
+                        _buildBottomActions(),
+                      ],
+                    ),
     );
   }
 
   Widget _buildImageSlider() {
     // For demo, we'll show placeholder images
-    final imageCount = widget.product.images.isNotEmpty ? widget.product.images.length : 3;
+    final imageCount = _product!.images.isNotEmpty ? _product!.images.length : 3;
     
     return Container(
       height: 300,
@@ -94,15 +135,42 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               });
             },
             itemBuilder: (context, index) {
-              return Container(
-                width: double.infinity,
-                color: AppColors.border,
-                child: const Icon(
-                  Icons.pedal_bike,
-                  color: AppColors.primary,
-                  size: 80,
-                ),
-              );
+              // Check if product has images and show actual images
+              if (_product!.images.isNotEmpty && index < _product!.images.length) {
+                return CachedNetworkImage(
+                  imageUrl: _product!.images[index],
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) => Container(
+                    color: AppColors.border,
+                    child: const Center(
+                      child: CircularProgressIndicator(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                  ),
+                  errorWidget: (context, url, error) => Container(
+                    color: AppColors.border,
+                    child: const Icon(
+                      Icons.pedal_bike,
+                      color: AppColors.primary,
+                      size: 80,
+                    ),
+                  ),
+                );
+              } else {
+                // Fallback to placeholder icon
+                return Container(
+                  width: double.infinity,
+                  color: AppColors.border,
+                  child: const Icon(
+                    Icons.pedal_bike,
+                    color: AppColors.primary,
+                    size: 80,
+                  ),
+                );
+              }
             },
           ),
           // Page indicators
@@ -163,12 +231,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            widget.product.title,
+            _product!.title,
             style: AppTextStyles.headline2,
           ),
           const SizedBox(height: AppDimensions.spacingSmall),
           Text(
-            _formatPrice(widget.product.price),
+            _formatPrice(_product!.price),
             style: AppTextStyles.price.copyWith(fontSize: 24),
           ),
           const SizedBox(height: AppDimensions.spacingMedium),
@@ -187,9 +255,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       spacing: AppDimensions.spacingSmall,
       runSpacing: AppDimensions.spacingSmall,
       children: [
-        _buildTag('카테고리: ${_getCategoryName(widget.product.category)}'),
-        _buildTag('등록: ${_formatTimeAgo(widget.product.createdAt)}'),
-        _buildTag('위치: ${widget.product.location}'),
+        _buildTag('카테고리: ${_getCategoryName(_product!.category)}'),
+        _buildTag('등록: ${_formatTimeAgo(_product!.createdAt)}'),
+        _buildTag('위치: ${_product!.location}'),
       ],
     );
   }
@@ -230,13 +298,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ? CrossFadeState.showSecond
               : CrossFadeState.showFirst,
           firstChild: Text(
-            widget.product.description,
+            _product!.description,
             style: AppTextStyles.body2,
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
           secondChild: Text(
-            widget.product.description,
+            _product!.description,
             style: AppTextStyles.body2,
           ),
         ),
@@ -323,7 +391,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 radius: AppDimensions.avatarMedium / 2,
                 backgroundColor: AppColors.primary,
                 child: Text(
-                  widget.product.seller.nickname[0],
+                  _product!.seller.nickname[0],
                   style: AppTextStyles.subtitle1.copyWith(color: Colors.white),
                 ),
               ),
@@ -333,12 +401,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.product.seller.nickname,
+                      _product!.seller.nickname,
                       style: AppTextStyles.subtitle1,
                     ),
                     const SizedBox(height: AppDimensions.spacingXSmall),
                     Text(
-                      widget.product.seller.location,
+                      _product!.seller.location,
                       style: AppTextStyles.caption,
                     ),
                   ],
@@ -381,9 +449,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             itemCount: 3, // Show 3 other products
             itemBuilder: (context, index) {
               // For demo, we'll use the same product with modified titles
-              final otherProduct = widget.product.copyWith(
+              final otherProduct = _product!.copyWith(
                 id: 'other_${index}',
-                title: '${widget.product.seller.nickname}의 다른 자전거 ${index + 1}',
+                title: '${_product!.seller.nickname}의 다른 자전거 ${index + 1}',
               );
               
               return Container(
@@ -397,7 +465,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                     Navigator.of(context).push(
                       MaterialPageRoute(
                         builder: (context) => ProductDetailScreen(
-                          product: otherProduct,
+                          productId: otherProduct.id,
                         ),
                       ),
                     );
@@ -456,8 +524,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 Navigator.of(context).push(
                   MaterialPageRoute(
                     builder: (context) => ChatRoomScreen(
-                      product: widget.product,
-                      otherUser: widget.product.seller,
+                      product: _product!,
+                      otherUser: _product!.seller,
                     ),
                   ),
                 );

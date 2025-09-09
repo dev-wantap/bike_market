@@ -321,7 +321,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         title: const Text('개인정보 처리방침'),
         content: const SingleChildScrollView(
           child: Text(
-            'BikeMarket은 사용자의 개인정보를 소중히 여기며, 개인정보보호법을 준수합니다.\n\n'
+            'CycleLink는 사용자의 개인정보를 소중히 여기며, 개인정보보호법을 준수합니다.\n\n'
             '1. 수집하는 개인정보 항목\n'
             '- 회원가입 시: 이메일, 닉네임, 위치정보\n'
             '- 서비스 이용 시: 거래내역, 채팅내용\n\n'

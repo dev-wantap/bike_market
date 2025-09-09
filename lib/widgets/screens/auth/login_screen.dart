@@ -100,7 +100,7 @@ class _LoginScreenState extends State<LoginScreen> {
               
               // 앱 이름
               const Text(
-                'BikeMarket',
+                'CycleLink',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 32,

@@ -90,7 +90,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
           ),
           const SizedBox(width: AppDimensions.spacingSmall),
           Text(
-            'BikeMarket',
+            'CycleLink',
             style: AppTextStyles.headline3.copyWith(
               color: AppColors.primary,
               fontWeight: FontWeight.bold,

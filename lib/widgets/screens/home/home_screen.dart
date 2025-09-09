@@ -6,6 +6,7 @@ import '../../../core/constants/text_styles.dart';
 import '../../../data/dummy_data.dart';
 import '../../../data/models/product.dart';
 import '../../../data/models/category.dart';
+import '../../../data/services/product_service.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../../common/category_item.dart';
@@ -13,8 +14,54 @@ import '../search/search_screen.dart';
 import '../product_detail/product_detail_screen.dart';
 import '../category_products/category_products_screen.dart';
 
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
+class HomeScreen extends StatefulWidget {
+  final VoidCallback? onRefresh;
+  
+  const HomeScreen({super.key, this.onRefresh});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  List<Product> _popularProducts = [];
+  List<Product> _recentProducts = [];
+  bool _isLoadingPopular = true;
+  bool _isLoadingRecent = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchData();
+  }
+
+  void refreshData() {
+    _fetchData();
+  }
+
+  Future<void> _fetchData() async {
+    try {
+      final popularFuture = ProductService.getPopularProducts();
+      final recentFuture = ProductService.getRecentProducts();
+      
+      final popular = await popularFuture;
+      final recent = await recentFuture;
+      
+      setState(() {
+        _popularProducts = popular;
+        _recentProducts = recent;
+        _isLoadingPopular = false;
+        _isLoadingRecent = false;
+      });
+    } catch (e) {
+      setState(() {
+        _popularProducts = DummyData.popularProducts;
+        _recentProducts = DummyData.recentProducts;
+        _isLoadingPopular = false;
+        _isLoadingRecent = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,23 +117,19 @@ class HomeScreen extends StatelessWidget {
 
     return CarouselSlider(
       options: CarouselOptions(
-        height: 180,
-        viewportFraction: 0.9,
+        height: 200,
+        viewportFraction: 1.0,
         autoPlay: true,
         autoPlayInterval: const Duration(seconds: 4),
         autoPlayAnimationDuration: const Duration(milliseconds: 800),
         autoPlayCurve: Curves.fastOutSlowIn,
-        enlargeCenterPage: true,
+        enlargeCenterPage: false,
       ),
       items: banners.map((banner) {
         return Container(
           width: double.infinity,
-          margin: const EdgeInsets.symmetric(
-            horizontal: AppDimensions.marginSmall,
-          ),
           decoration: BoxDecoration(
             color: banner.color,
-            borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.1),
@@ -144,9 +187,9 @@ class HomeScreen extends StatelessWidget {
             horizontal: AppDimensions.paddingMedium,
           ),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 4, // 4열로 변경
-            childAspectRatio: 0.9, // 비율 조정
-            crossAxisSpacing: AppDimensions.spacingMedium,
+            crossAxisCount: 5, // 5열로 변경
+            childAspectRatio: 0.8, // 비율 조정
+            crossAxisSpacing: AppDimensions.spacingSmall,
             mainAxisSpacing: AppDimensions.spacingMedium,
           ),
           itemCount: DummyData.categories.length,
@@ -201,37 +244,39 @@ class HomeScreen extends StatelessWidget {
         const SizedBox(height: AppDimensions.spacingMedium),
         SizedBox(
           height: AppDimensions.productCardHeight + 20,
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMedium,
-            ),
-            scrollDirection: Axis.horizontal,
-            itemCount: DummyData.popularProducts.length,
-            itemBuilder: (context, index) {
-              final product = DummyData.popularProducts[index];
-              return Container(
-                margin: const EdgeInsets.only(
-                  right: AppDimensions.marginMedium,
-                ),
-                child: ProductCard(
-                  product: product,
-                  type: ProductCardType.grid,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => ProductDetailScreen(
-                          product: product,
-                        ),
+          child: _isLoadingPopular
+              ? const Center(child: CircularProgressIndicator())
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingMedium,
+                  ),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _popularProducts.length,
+                  itemBuilder: (context, index) {
+                    final product = _popularProducts[index];
+                    return Container(
+                      margin: const EdgeInsets.only(
+                        right: AppDimensions.marginMedium,
+                      ),
+                      child: ProductCard(
+                        product: product,
+                        type: ProductCardType.grid,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailScreen(
+                                productId: product.id,
+                              ),
+                            ),
+                          );
+                        },
+                        onFavorite: () {
+                          // Handle favorite toggle
+                        },
                       ),
                     );
                   },
-                  onFavorite: () {
-                    // Handle favorite toggle
-                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );
@@ -267,30 +312,32 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: AppDimensions.spacingMedium),
-        ListView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: DummyData.recentProducts.length,
-          itemBuilder: (context, index) {
-            final product = DummyData.recentProducts[index];
-            return ProductCard(
-              product: product,
-              type: ProductCardType.list,
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetailScreen(
-                      product: product,
-                    ),
-                  ),
-                );
-              },
-              onFavorite: () {
-                // Handle favorite toggle
-              },
-            );
-          },
-        ),
+        _isLoadingRecent
+            ? const Center(child: CircularProgressIndicator())
+            : ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: _recentProducts.length,
+                itemBuilder: (context, index) {
+                  final product = _recentProducts[index];
+                  return ProductCard(
+                    product: product,
+                    type: ProductCardType.list,
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => ProductDetailScreen(
+                            productId: product.id,
+                          ),
+                        ),
+                      );
+                    },
+                    onFavorite: () {
+                      // Handle favorite toggle
+                    },
+                  );
+                },
+              ),
       ],
     );
   }

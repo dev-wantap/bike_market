@@ -23,6 +23,35 @@ class Product {
     required this.seller,
   });
 
+  factory Product.fromJson(Map<String, dynamic> json) {
+    return Product(
+      id: (json['id'] as num).toString(),
+      title: json['title'] ?? '',
+      price: json['price'] ?? 0,
+      description: json['description'] ?? '',
+      images: List<String>.from(json['image_urls'] ?? []),
+      category: json['category'] ?? '',
+      location: json['location'] ?? '',
+      createdAt: DateTime.parse(json['created_at']),
+      isFavorite: false,
+      seller: Seller.fromJson(json['profiles'] ?? {}),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': int.tryParse(id),
+      'title': title,
+      'price': price,
+      'description': description,
+      'image_urls': images,
+      'category': category,
+      'location': location,
+      'created_at': createdAt.toIso8601String(),
+      'seller_id': seller.id,
+    };
+  }
+
   Product copyWith({
     String? id,
     String? title,
@@ -64,6 +93,25 @@ class Seller {
     required this.location,
     required this.otherProducts,
   });
+
+  factory Seller.fromJson(Map<String, dynamic> json) {
+    return Seller(
+      id: json['id'] ?? '',
+      nickname: json['nickname'] ?? '익명',
+      profileImage: json['profile_image_url'] ?? '',
+      location: json['location'] ?? '위치 정보 없음',
+      otherProducts: [],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nickname': nickname,
+      'profile_image_url': profileImage,
+      'location': location,
+    };
+  }
 
   Seller copyWith({
     String? id,

@@ -1,11 +1,17 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../data/models/product.dart';
 
 class AddProductScreen extends StatefulWidget {
-  const AddProductScreen({super.key});
+  final VoidCallback? onProductAdded;
+  
+  const AddProductScreen({super.key, this.onProductAdded});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -22,7 +28,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String _selectedCategory = '';
   String _selectedCondition = '좋음';
   bool _isNegotiable = false;
-  List<String> _selectedImages = [];
+  List<File> _selectedImages = [];
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isUploading = false;
   
   final List<String> _categories = [
     '로드바이크', '산악자전거', '하이브리드', '접이식자전거', '전기자전거', 
@@ -40,6 +48,101 @@ class _AddProductScreenState extends State<AddProductScreen> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('최대 5장까지 선택할 수 있습니다.')),
+      );
+      return;
+    }
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('카메라로 촬영'),
+              onTap: () {
+                Navigator.pop(context);
+                _getImage(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('갤러리에서 선택'),
+              onTap: () {
+                Navigator.pop(context);
+                _getImage(ImageSource.gallery);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _getImage(ImageSource source) async {
+    try {
+      final XFile? pickedFile = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+        maxHeight: 1920,
+        maxWidth: 1920,
+      );
+
+      if (pickedFile != null) {
+        setState(() {
+          _selectedImages.add(File(pickedFile.path));
+        });
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('이미지 선택 중 오류가 발생했습니다: $e')),
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  Future<String> _uploadImage(File imageFile) async {
+    final imageExtension = imageFile.path.split('.').last.toLowerCase();
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$imageExtension';
+    final userId = Supabase.instance.client.auth.currentUser!.id;
+    final filePath = '$userId/$fileName';
+
+    int maxRetries = 3;
+    int retryCount = 0;
+    
+    while (retryCount < maxRetries) {
+      try {
+        await Supabase.instance.client.storage
+            .from('product-images')
+            .upload(filePath, imageFile);
+        
+        return Supabase.instance.client.storage
+            .from('product-images')
+            .getPublicUrl(filePath);
+            
+      } catch (e) {
+        retryCount++;
+        if (retryCount >= maxRetries) {
+          throw Exception('이미지 업로드 실패 (${maxRetries}회 시도): ${e.toString()}');
+        }
+        
+        await Future.delayed(Duration(seconds: retryCount * 2));
+      }
+    }
+    
+    throw Exception('이미지 업로드 실패');
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -50,14 +153,20 @@ class _AddProductScreenState extends State<AddProductScreen> {
         elevation: 0,
         actions: [
           TextButton(
-            onPressed: _submitProduct,
-            child: const Text(
-              '완료',
-              style: TextStyle(
-                color: AppColors.primary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            onPressed: _isUploading ? null : _submitProduct,
+            child: _isUploading 
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Text(
+                    '완료',
+                    style: TextStyle(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
           ),
         ],
       ),
@@ -155,7 +264,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     final hasImage = index < _selectedImages.length;
     
     return GestureDetector(
-      onTap: hasImage ? () => _removeImage(index) : () => _addImage(index),
+      onTap: hasImage ? () => _removeImage(index) : _pickImage,
       child: Container(
         decoration: BoxDecoration(
           color: hasImage ? AppColors.surface : AppColors.background,
@@ -170,15 +279,11 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-                    child: Container(
+                    child: Image.file(
+                      _selectedImages[index],
                       width: double.infinity,
                       height: double.infinity,
-                      color: AppColors.primary.withOpacity(0.1),
-                      child: Icon(
-                        Icons.image,
-                        color: AppColors.primary,
-                        size: 40,
-                      ),
+                      fit: BoxFit.cover,
                     ),
                   ),
                   Positioned(
@@ -522,57 +627,156 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  void _addImage(int index) {
-    setState(() {
-      // In a real app, this would open image picker
-      _selectedImages.add('image_$index');
-    });
+
+  Future<void> _submitProduct() async {
+    print('=== _submitProduct 시작 ===');
     
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('이미지 ${index + 1} 추가됨 (실제 구현 시 갤러리/카메라 연동)'),
-        backgroundColor: AppColors.primary,
-      ),
-    );
-  }
+    if (!_formKey.currentState!.validate()) {
+      print('폼 검증 실패');
+      return;
+    }
 
-  void _removeImage(int index) {
-    setState(() {
-      _selectedImages.removeAt(index);
-    });
-  }
-
-  void _submitProduct() {
-    if (_formKey.currentState!.validate()) {
-      if (_selectedImages.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('상품 사진을 최소 1장 등록해주세요'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        return;
-      }
-      
-      if (_selectedCategory.isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('카테고리를 선택해주세요'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        return;
-      }
-
-      // In a real app, this would submit to backend
-      Navigator.of(context).pop();
+    if (_selectedImages.isEmpty) {
+      print('이미지 없음');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('상품이 등록되었습니다'),
-          backgroundColor: AppColors.success,
+          content: Text('상품 사진을 최소 1장 등록해주세요'),
+          backgroundColor: AppColors.error,
         ),
       );
+      return;
     }
+    
+    if (_selectedCategory.isEmpty) {
+      print('카테고리 선택 안함');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('카테고리를 선택해주세요'),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    print('로딩 시작: _isUploading = true');
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      // 이미지들을 병렬로 업로드
+      print('이미지 업로드 시작: ${_selectedImages.length}개');
+      final imageUrls = <String>[];
+      for (int i = 0; i < _selectedImages.length; i++) {
+        try {
+          print('이미지 ${i + 1} 업로드 중...');
+          final url = await _uploadImage(_selectedImages[i]);
+          imageUrls.add(url);
+          print('이미지 ${i + 1} 업로드 완료: $url');
+        } catch (e) {
+          print('이미지 ${i + 1} 업로드 실패: $e');
+          throw Exception('이미지 ${i + 1} 업로드 실패: ${e.toString()}');
+        }
+      }
+
+      // 카테고리 매핑
+      final categoryMap = {
+        '로드바이크': 'road',
+        '산악자전거': 'mtb', 
+        '하이브리드': 'hybrid',
+        '접이식자전거': 'folding',
+        '전기자전거': 'electric',
+        '미니벨로': 'city',
+        '픽시': 'road',
+        '커스텀': 'road',
+        '부품': 'road',
+        '기타': 'road',
+      };
+
+      // 상품 데이터 생성
+      final product = Product(
+        id: '', // 서버에서 자동 생성
+        title: _titleController.text.trim(),
+        price: int.parse(_priceController.text.replaceAll(',', '')),
+        description: _descriptionController.text.trim(),
+        images: imageUrls,
+        category: categoryMap[_selectedCategory] ?? 'road',
+        location: _locationController.text.trim(),
+        createdAt: DateTime.now(),
+        isFavorite: false,
+        seller: Seller(
+          id: Supabase.instance.client.auth.currentUser!.id,
+          nickname: '',
+          profileImage: '',
+          location: _locationController.text.trim(),
+          otherProducts: [],
+        ),
+      );
+
+      // ProductService를 사용하여 상품 등록
+      print('상품 DB 저장 시작');
+      await _insertProduct(product);
+      print('상품 DB 저장 완료');
+
+      if (mounted) {
+        print('상품 등록 성공 - 화면 이동');
+        
+        // 상품 등록 성공 알림
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('상품이 등록되었습니다'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        
+        // 폼 초기화
+        _titleController.clear();
+        _descriptionController.clear();
+        _priceController.clear();
+        _locationController.clear();
+        setState(() {
+          _selectedImages.clear();
+          _selectedCategory = '';
+          _isNegotiable = false;
+        });
+        
+        // 홈으로 이동
+        widget.onProductAdded?.call();
+      }
+    } catch (e) {
+      print('상품 등록 에러: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('상품 등록 중 오류가 발생했습니다: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      print('로딩 종료: _isUploading = false');
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _insertProduct(Product product) async {
+    final supabase = Supabase.instance.client;
+    
+    await supabase.from('products').insert({
+      'seller_id': product.seller.id,
+      'title': product.title,
+      'description': product.description,
+      'price': product.price,
+      'image_urls': product.images,
+      'category': product.category,
+      'location': product.location,
+      'status': 'selling',
+      'view_count': 0,
+    });
   }
 }
 

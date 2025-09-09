@@ -258,16 +258,27 @@ class ProductCard extends StatelessWidget {
       );
     }
 
-    // For now, we'll use placeholder images
-    // In a real app, this would use CachedNetworkImage
-    return Container(
+    // 실제 네트워크 이미지 로드
+    return CachedNetworkImage(
+      imageUrl: product.images.first,
       width: double.infinity,
       height: double.infinity,
-      color: AppColors.border,
-      child: const Icon(
-        Icons.pedal_bike,
-        color: AppColors.primary,
-        size: AppDimensions.iconLarge,
+      fit: BoxFit.cover,
+      placeholder: (context, url) => Container(
+        color: AppColors.border,
+        child: const Icon(
+          Icons.pedal_bike,
+          color: AppColors.primary,
+          size: AppDimensions.iconLarge,
+        ),
+      ),
+      errorWidget: (context, url, error) => Container(
+        color: AppColors.border,
+        child: const Icon(
+          Icons.broken_image,
+          color: AppColors.error,
+          size: AppDimensions.iconLarge,
+        ),
       ),
     );
   }

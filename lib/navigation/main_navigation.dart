@@ -17,14 +17,44 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
+  int _refreshTrigger = 0;
 
-  final List<Widget> _screens = [
-    const HomeScreen(),
-    const SearchScreen(),
-    const AddProductScreen(),
-    const ChatListScreen(),
-    const ProfileScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _updateScreens();
+  }
+
+  void _updateScreens() {
+    _screens = [
+      HomeScreen(key: ValueKey(_refreshTrigger), onRefresh: _refreshHomeScreen),
+      const SearchScreen(),
+      AddProductScreen(onProductAdded: _onProductAdded),
+      const ChatListScreen(),
+      const ProfileScreen(),
+    ];
+  }
+
+  void _refreshHomeScreen() {
+    // HomeScreen을 재생성하여 새로고침 효과
+    setState(() {
+      _refreshTrigger++;
+      _updateScreens();
+    });
+  }
+
+  void _onProductAdded() {
+    // 상품 등록 완료 시 홈으로 이동 후 데이터 새로고침
+    setState(() {
+      _currentIndex = 0;
+    });
+    // 약간의 지연 후 데이터 새로고침
+    Future.delayed(const Duration(milliseconds: 100), () {
+      _refreshHomeScreen();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
