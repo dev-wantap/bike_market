@@ -20,7 +20,7 @@ class ProductDetailScreen extends StatefulWidget {
 }
 
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
-  PageController _imagePageController = PageController();
+  final PageController _imagePageController = PageController();
   int _currentImageIndex = 0;
   bool _isFavorite = false;
   bool _isDescriptionExpanded = false;

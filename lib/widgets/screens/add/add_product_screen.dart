@@ -28,7 +28,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String _selectedCategory = '';
   String _selectedCondition = '좋음';
   bool _isNegotiable = false;
-  List<File> _selectedImages = [];
+  final List<File> _selectedImages = [];
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
   
