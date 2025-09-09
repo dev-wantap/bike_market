@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/colors.dart';
@@ -61,7 +63,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         params: {'p_product_id': int.parse(widget.productId)}, // 함수에 전달할 파라미터
       );
     } catch (e) {
-      print('Failed to increment view count via RPC: $e');
+      log('Failed to increment view count via RPC: $e');
     }
   }
 
@@ -137,7 +139,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         ? _product!.images.length
         : 3;
 
-    return Container(
+    return SizedBox(
       height: 300,
       child: Stack(
         children: [

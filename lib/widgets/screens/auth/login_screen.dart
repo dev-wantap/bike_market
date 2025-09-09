@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -23,7 +25,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void _listenToAuthChanges() {
     supabase.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.signedIn && mounted) {
-        print('Login successful, user signed in');
+        log('Login successful, user signed in');
         // 로그인 성공 시 로딩 상태 해제
         setState(() {
           _isLoading = false;
@@ -46,10 +48,10 @@ class _LoginScreenState extends State<LoginScreen> {
       );
       
       // OAuth 요청 성공 (실제 로그인 완료는 AuthState 리스너에서 처리)
-      print('OAuth request initiated successfully');
+      log('OAuth request initiated successfully');
       
     } on AuthException catch (error) {
-      print('AuthException: ${error.message}');
+      log('AuthException: ${error.message}');
       if (mounted) {
         setState(() {
           _isLoading = false;
@@ -62,7 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
         );
       }
     } catch (error) {
-      print('General error: $error');
+      log('General error: $error');
       if (mounted) {
         setState(() {
           _isLoading = false;

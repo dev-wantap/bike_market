@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import '../models/profile.dart';
 import '../../main.dart';
 
@@ -20,7 +22,7 @@ class ProfileService {
 
       return Profile.fromJson(response);
     } catch (e) {
-      print('Error fetching user profile: $e');
+      log('Error fetching user profile: $e');
       return null;
     }
   }
@@ -38,7 +40,7 @@ class ProfileService {
 
       return Profile.fromJson(response);
     } catch (e) {
-      print('Error fetching profile by id: $e');
+      log('Error fetching profile by id: $e');
       return null;
     }
   }
@@ -69,7 +71,7 @@ class ProfileService {
 
       return Profile.fromJson(response);
     } catch (e) {
-      print('Error upserting profile: $e');
+      log('Error upserting profile: $e');
       return null;
     }
   }
@@ -90,7 +92,7 @@ class ProfileService {
 
       return true;
     } catch (e) {
-      print('Error updating nickname: $e');
+      log('Error updating nickname: $e');
       return false;
     }
   }
@@ -120,7 +122,7 @@ class ProfileService {
 
       return true;
     } catch (e) {
-      print('Error updating profile: $e');
+      log('Error updating profile: $e');
       return false;
     }
   }
@@ -141,7 +143,7 @@ class ProfileService {
 
       return true;
     } catch (e) {
-      print('Error updating location: $e');
+      log('Error updating location: $e');
       return false;
     }
   }
@@ -173,7 +175,7 @@ class ProfileService {
 
       return Profile.fromJson(response);
     } catch (e) {
-      print('Error creating profile: $e');
+      log('Error creating profile: $e');
       return null;
     }
   }

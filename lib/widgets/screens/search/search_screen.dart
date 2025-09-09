@@ -88,7 +88,7 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   Widget _buildSearchBar() {
-    return Container(
+    return SizedBox(
       height: 40,
       child: TextField(
         controller: _searchController,

@@ -127,7 +127,7 @@ class _MyProductsScreenState extends State<MyProductsScreen>
               onPressed: () {
                 // Navigate to add product screen
                 Navigator.of(context).pop();
-                DefaultTabController.of(context)?.animateTo(2); // Add tab
+                DefaultTabController.of(context).animateTo(2); // Add tab
               },
               child: const Text('상품 등록하기'),
             ),

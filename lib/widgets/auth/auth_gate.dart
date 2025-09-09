@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../main.dart';
@@ -55,17 +57,17 @@ class _AuthGateState extends State<AuthGate> {
           nickname: nickname,
           avatarUrl: user.userMetadata?['avatar_url'] as String?,
         );
-        print('Profile created for user: ${user.email}');
+        log('Profile created for user: ${user.email}');
       } else {
-        print('Profile exists for user: ${user.email}');
+        log('Profile exists for user: ${user.email}');
       }
     } catch (e) {
-      print('Error ensuring user profile: $e');
+      log('Error ensuring user profile: $e');
     }
   }
 
   void _onAuthStateChange(AuthState authState) async {
-    print('Auth state changed: ${authState.event}, Session: ${authState.session?.user?.email}');
+    log('Auth state changed: ${authState.event}, Session: ${authState.session?.user.email}');
     
     if (authState.event == AuthChangeEvent.signedIn && authState.session?.user != null) {
       // 로그인 성공시 프로필 확인 및 생성
@@ -103,7 +105,7 @@ class _AuthGateState extends State<AuthGate> {
           _onAuthStateChange(snapshot.data!);
         }
 
-        print('Current session in build: ${currentSession?.user?.email}');
+        log('Current session in build: ${currentSession?.user.email}');
 
         if (currentSession != null) {
           // 로그인된 경우 메인 네비게이션으로

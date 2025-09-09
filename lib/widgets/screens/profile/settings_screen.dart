@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
@@ -399,13 +401,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _handleLogout(BuildContext context) async {
     try {
-      print('Starting logout process...');
+      log('Starting logout process...');
       await supabase.auth.signOut();
-      print('Logout successful');
+      log('Logout successful');
       
       // 스낵바는 표시하지 않음 (이미 로그인 화면으로 이동했기 때문)
     } catch (e) {
-      print('Logout error: $e');
+      log('Logout error: $e');
       // 에러 발생시에만 스낵바 표시
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

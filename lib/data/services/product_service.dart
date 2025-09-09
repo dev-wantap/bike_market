@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/product.dart';
 
@@ -15,7 +17,7 @@ class ProductService {
       
       return (response as List).map((json) => Product.fromJson(json)).toList();
     } catch (e) {
-      print('Error fetching recent products: $e');
+      log('Error fetching recent products: $e');
       return [];
     }
   }
@@ -31,7 +33,7 @@ class ProductService {
       
       return (response as List).map((json) => Product.fromJson(json)).toList();
     } catch (e) {
-      print('Error fetching popular products: $e');
+      log('Error fetching popular products: $e');
       return [];
     }
   }
@@ -52,7 +54,7 @@ class ProductService {
       
       return Product.fromJson(response);
     } catch (e) {
-      print('Error fetching product details: $e');
+      log('Error fetching product details: $e');
       throw Exception('상품 정보를 불러올 수 없습니다.');
     }
   }
@@ -69,7 +71,7 @@ class ProductService {
       
       return (response as List).map((json) => Product.fromJson(json)).toList();
     } catch (e) {
-      print('Error fetching products by category: $e');
+      log('Error fetching products by category: $e');
       return [];
     }
   }
@@ -86,7 +88,7 @@ class ProductService {
       
       return (response as List).map((json) => Product.fromJson(json)).toList();
     } catch (e) {
-      print('Error searching products: $e');
+      log('Error searching products: $e');
       return [];
     }
   }

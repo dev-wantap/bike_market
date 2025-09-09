@@ -1,4 +1,6 @@
+import 'dart:developer';
 import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -630,15 +632,15 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
 
   Future<void> _submitProduct() async {
-    print('=== _submitProduct 시작 ===');
+    log('=== _submitProduct 시작 ===');
     
     if (!_formKey.currentState!.validate()) {
-      print('폼 검증 실패');
+      log('폼 검증 실패');
       return;
     }
 
     if (_selectedImages.isEmpty) {
-      print('이미지 없음');
+      log('이미지 없음');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('상품 사진을 최소 1장 등록해주세요'),
@@ -649,7 +651,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     }
     
     if (_selectedCategory.isEmpty) {
-      print('카테고리 선택 안함');
+      log('카테고리 선택 안함');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('카테고리를 선택해주세요'),
@@ -659,23 +661,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    print('로딩 시작: _isUploading = true');
+    log('로딩 시작: _isUploading = true');
     setState(() {
       _isUploading = true;
     });
 
     try {
       // 이미지들을 병렬로 업로드
-      print('이미지 업로드 시작: ${_selectedImages.length}개');
+      log('이미지 업로드 시작: ${_selectedImages.length}개');
       final imageUrls = <String>[];
       for (int i = 0; i < _selectedImages.length; i++) {
         try {
-          print('이미지 ${i + 1} 업로드 중...');
+          log('이미지 ${i + 1} 업로드 중...');
           final url = await _uploadImage(_selectedImages[i]);
           imageUrls.add(url);
-          print('이미지 ${i + 1} 업로드 완료: $url');
+          log('이미지 ${i + 1} 업로드 완료: $url');
         } catch (e) {
-          print('이미지 ${i + 1} 업로드 실패: $e');
+          log('이미지 ${i + 1} 업로드 실패: $e');
           throw Exception('이미지 ${i + 1} 업로드 실패: ${e.toString()}');
         }
       }
@@ -715,12 +717,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
       );
 
       // ProductService를 사용하여 상품 등록
-      print('상품 DB 저장 시작');
+      log('상품 DB 저장 시작');
       await _insertProduct(product);
-      print('상품 DB 저장 완료');
+      log('상품 DB 저장 완료');
 
       if (mounted) {
-        print('상품 등록 성공 - 화면 이동');
+        log('상품 등록 성공 - 화면 이동');
         
         // 상품 등록 성공 알림
         ScaffoldMessenger.of(context).showSnackBar(
@@ -745,7 +747,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         widget.onProductAdded?.call();
       }
     } catch (e) {
-      print('상품 등록 에러: $e');
+      log('상품 등록 에러: $e');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -755,7 +757,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         );
       }
     } finally {
-      print('로딩 종료: _isUploading = false');
+      log('로딩 종료: _isUploading = false');
       if (mounted) {
         setState(() {
           _isUploading = false;

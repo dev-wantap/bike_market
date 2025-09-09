@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'app.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -15,7 +17,7 @@ void main() async {
   Supabase.instance.client.auth.onAuthStateChange.listen((data) {
     final AuthChangeEvent event = data.event;
     if (event == AuthChangeEvent.signedIn) {
-      print('User signed in: ${data.session?.user.email}');
+      log('User signed in: ${data.session?.user.email}');
     }
   });
   
