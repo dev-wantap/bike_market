@@ -282,9 +282,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         vertical: AppDimensions.paddingXSmall,
       ),
       decoration: BoxDecoration(
-        color: AppColors.primary.withOpacity(0.1),
+        color: AppColors.primary.withAlpha(26),
         borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
-        border: Border.all(color: AppColors.primary.withOpacity(0.3)),
+        border: Border.all(color: AppColors.primary.withAlpha(77)),
       ),
       child: Text(
         text,
@@ -385,7 +385,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withAlpha(13),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),

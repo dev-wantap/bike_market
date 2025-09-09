@@ -24,11 +24,11 @@ class CategoryItem extends StatelessWidget {
             width: AppDimensions.categoryItemSize,
             height: AppDimensions.categoryItemSize,
             decoration: BoxDecoration(
-              color: category.color.withOpacity(0.1),
+              color: category.color.withAlpha(26),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withAlpha(13),
                   blurRadius: 8,
                   offset: const Offset(0, 2),
                 ),
