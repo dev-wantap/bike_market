@@ -5,7 +5,6 @@ import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/dummy_data.dart';
 import '../../../data/models/product.dart';
-import '../../../data/models/category.dart';
 import '../../../data/services/product_service.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';

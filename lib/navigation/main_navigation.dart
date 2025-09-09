@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../core/constants/colors.dart';
-import '../core/constants/dimensions.dart';
 import '../data/dummy_data.dart';
 import '../widgets/screens/home/home_screen.dart';
 import '../widgets/screens/search/search_screen.dart';
