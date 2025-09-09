@@ -77,3 +77,4 @@ Thumbs.db
 *.dSYM.zip
 *.dSYM
 repomix-output.xml
+.mcp.json
