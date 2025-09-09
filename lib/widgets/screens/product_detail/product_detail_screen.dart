@@ -8,14 +8,12 @@ import '../../../data/services/product_service.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../chat/chat_room_screen.dart';
+import '../../../main.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
 
-  const ProductDetailScreen({
-    super.key,
-    required this.productId,
-  });
+  const ProductDetailScreen({super.key, required this.productId});
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -44,11 +42,26 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         _isFavorite = product.isFavorite;
         _isLoading = false;
       });
+
+      // 조회수 증가
+      _incrementViewCount();
     } catch (e) {
       setState(() {
         _error = e.toString();
         _isLoading = false;
       });
+    }
+  }
+
+  Future<void> _incrementViewCount() async {
+    try {
+      // Edge Function 호출 대신 rpc 호출
+      await supabase.rpc(
+        'increment_view_count', // SQL 함수 이름
+        params: {'p_product_id': int.parse(widget.productId)}, // 함수에 전달할 파라미터
+      );
+    } catch (e) {
+      print('Failed to increment view count via RPC: $e');
     }
   }
 
@@ -65,9 +78,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         onBackPressed: () => Navigator.of(context).pop(),
         onSharePressed: () {
           // Handle share
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('공유 기능')),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('공유 기능')));
         },
         onMorePressed: () {
           _showMoreMenu(context);
@@ -76,52 +89,54 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(Icons.error, size: 64, color: AppColors.error),
-                      const SizedBox(height: AppDimensions.spacingMedium),
-                      Text(_error!, style: AppTextStyles.body2),
-                      const SizedBox(height: AppDimensions.spacingMedium),
-                      ElevatedButton(
-                        onPressed: _fetchProductDetails,
-                        child: const Text('다시 시도'),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.error, size: 64, color: AppColors.error),
+                  const SizedBox(height: AppDimensions.spacingMedium),
+                  Text(_error!, style: AppTextStyles.body2),
+                  const SizedBox(height: AppDimensions.spacingMedium),
+                  ElevatedButton(
+                    onPressed: _fetchProductDetails,
+                    child: const Text('다시 시도'),
                   ),
-                )
-              : _product == null
-                  ? const Center(child: Text('상품을 찾을 수 없습니다'))
-                  : Column(
+                ],
+              ),
+            )
+          : _product == null
+          ? const Center(child: Text('상품을 찾을 수 없습니다'))
+          : Column(
+              children: [
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: SingleChildScrollView(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                _buildImageSlider(),
-                                const SizedBox(height: AppDimensions.spacingMedium),
-                                _buildProductInfo(),
-                                const SizedBox(height: AppDimensions.spacingLarge),
-                                _buildSellerInfo(),
-                                const SizedBox(height: AppDimensions.spacingLarge),
-                                _buildOtherProducts(),
-                                const SizedBox(height: AppDimensions.spacingXXLarge),
-                              ],
-                            ),
-                          ),
-                        ),
-                        _buildBottomActions(),
+                        _buildImageSlider(),
+                        const SizedBox(height: AppDimensions.spacingMedium),
+                        _buildProductInfo(),
+                        const SizedBox(height: AppDimensions.spacingLarge),
+                        _buildSellerInfo(),
+                        const SizedBox(height: AppDimensions.spacingLarge),
+                        _buildOtherProducts(),
+                        const SizedBox(height: AppDimensions.spacingXXLarge),
                       ],
                     ),
+                  ),
+                ),
+                _buildBottomActions(),
+              ],
+            ),
     );
   }
 
   Widget _buildImageSlider() {
     // For demo, we'll show placeholder images
-    final imageCount = _product!.images.isNotEmpty ? _product!.images.length : 3;
-    
+    final imageCount = _product!.images.isNotEmpty
+        ? _product!.images.length
+        : 3;
+
     return Container(
       height: 300,
       child: Stack(
@@ -136,7 +151,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             },
             itemBuilder: (context, index) {
               // Check if product has images and show actual images
-              if (_product!.images.isNotEmpty && index < _product!.images.length) {
+              if (_product!.images.isNotEmpty &&
+                  index < _product!.images.length) {
                 return CachedNetworkImage(
                   imageUrl: _product!.images[index],
                   width: double.infinity,
@@ -230,10 +246,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            _product!.title,
-            style: AppTextStyles.headline2,
-          ),
+          Text(_product!.title, style: AppTextStyles.headline2),
           const SizedBox(height: AppDimensions.spacingSmall),
           Text(
             _formatPrice(_product!.price),
@@ -287,10 +300,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '상품 설명',
-          style: AppTextStyles.subtitle1,
-        ),
+        Text('상품 설명', style: AppTextStyles.subtitle1),
         const SizedBox(height: AppDimensions.spacingSmall),
         AnimatedCrossFade(
           duration: const Duration(milliseconds: 300),
@@ -303,10 +313,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
           ),
-          secondChild: Text(
-            _product!.description,
-            style: AppTextStyles.body2,
-          ),
+          secondChild: Text(_product!.description, style: AppTextStyles.body2),
         ),
         const SizedBox(height: AppDimensions.spacingSmall),
         GestureDetector(
@@ -346,7 +353,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildDetailRow(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingXSmall),
+      padding: const EdgeInsets.symmetric(
+        vertical: AppDimensions.paddingXSmall,
+      ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -354,15 +363,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             width: 80,
             child: Text(
               label,
-              style: AppTextStyles.body2.copyWith(color: AppColors.textSecondary),
+              style: AppTextStyles.body2.copyWith(
+                color: AppColors.textSecondary,
+              ),
             ),
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: AppTextStyles.body2,
-            ),
-          ),
+          Expanded(child: Text(value, style: AppTextStyles.body2)),
         ],
       ),
     );
@@ -370,7 +376,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   Widget _buildSellerInfo() {
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppDimensions.marginMedium),
+      margin: const EdgeInsets.symmetric(
+        horizontal: AppDimensions.marginMedium,
+      ),
       padding: const EdgeInsets.all(AppDimensions.paddingMedium),
       decoration: BoxDecoration(
         color: AppColors.surface,
@@ -433,10 +441,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.paddingMedium,
           ),
-          child: Text(
-            '이 판매자의 다른 상품',
-            style: AppTextStyles.headline3,
-          ),
+          child: Text('이 판매자의 다른 상품', style: AppTextStyles.headline3),
         ),
         const SizedBox(height: AppDimensions.spacingMedium),
         SizedBox(
@@ -453,7 +458,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 id: 'other_${index}',
                 title: '${_product!.seller.nickname}의 다른 자전거 ${index + 1}',
               );
-              
+
               return Container(
                 margin: const EdgeInsets.only(
                   right: AppDimensions.marginMedium,
@@ -464,9 +469,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => ProductDetailScreen(
-                          productId: otherProduct.id,
-                        ),
+                        builder: (context) =>
+                            ProductDetailScreen(productId: otherProduct.id),
                       ),
                     );
                   },
@@ -488,13 +492,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
         left: AppDimensions.paddingMedium,
         right: AppDimensions.paddingMedium,
         top: AppDimensions.paddingMedium,
-        bottom: AppDimensions.paddingMedium + MediaQuery.of(context).padding.bottom,
+        bottom:
+            AppDimensions.paddingMedium + MediaQuery.of(context).padding.bottom,
       ),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        border: Border(
-          top: BorderSide(color: AppColors.divider, width: 1),
-        ),
+        border: Border(top: BorderSide(color: AppColors.divider, width: 1)),
       ),
       child: Row(
         children: [
@@ -542,7 +545,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     showModalBottomSheet(
       context: context,
       builder: (context) => Container(
-        padding: const EdgeInsets.symmetric(vertical: AppDimensions.paddingLarge),
+        padding: const EdgeInsets.symmetric(
+          vertical: AppDimensions.paddingLarge,
+        ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -551,9 +556,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               title: const Text('신고하기'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('신고가 접수되었습니다')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('신고가 접수되었습니다')));
               },
             ),
             ListTile(
@@ -561,9 +566,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               title: const Text('이 판매자 차단'),
               onTap: () {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('판매자를 차단했습니다')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(const SnackBar(content: Text('판매자를 차단했습니다')));
               },
             ),
           ],
@@ -573,10 +578,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   String _formatPrice(int price) {
-    return '${price.toString().replaceAllMapped(
-      RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-      (Match m) => '${m[1]},',
-    )}원';
+    return '${price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원';
   }
 
   String _formatTimeAgo(DateTime dateTime) {
@@ -596,15 +598,24 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
   String _getCategoryName(String categoryId) {
     switch (categoryId) {
-      case 'road': return '로드바이크';
-      case 'mtb': return 'MTB';
-      case 'hybrid': return '하이브리드';
-      case 'folding': return '접이식';
-      case 'electric': return '전기자전거';
-      case 'bmx': return 'BMX';
-      case 'city': return '시티바이크';
-      case 'kids': return '어린이용';
-      default: return '기타';
+      case 'road':
+        return '로드바이크';
+      case 'mtb':
+        return 'MTB';
+      case 'hybrid':
+        return '하이브리드';
+      case 'folding':
+        return '접이식';
+      case 'electric':
+        return '전기자전거';
+      case 'bmx':
+        return 'BMX';
+      case 'city':
+        return '시티바이크';
+      case 'kids':
+        return '어린이용';
+      default:
+        return '기타';
     }
   }
 }
