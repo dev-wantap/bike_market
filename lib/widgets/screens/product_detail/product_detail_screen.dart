@@ -11,6 +11,7 @@ import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../chat/chat_room_screen.dart';
 import '../../../main.dart';
+import '../../../navigation/main_navigation.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -465,7 +466,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
             itemBuilder: (context, index) {
               // For demo, we'll use the same product with modified titles
               final otherProduct = _product!.copyWith(
-                id: 'other_${index}',
+                id: 'other_$index',
                 title: '${_product!.seller.nickname}의 다른 자전거 ${index + 1}',
               );
 
@@ -685,6 +686,10 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               onPressed: () async {
                 Navigator.of(context).pop(); // 팝업 먼저 닫기
 
+                // 먼저 context를 저장
+                final navigator = Navigator.of(context);
+                final scaffoldMessenger = ScaffoldMessenger.of(context);
+                
                 try {
                   log('Attempting to delete product ID: ${_product!.id}');
                   
@@ -700,40 +705,40 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   
                   log('Product deletion successful on client-side.');
 
-                  if (mounted) {
-                    // Hide loading dialog
-                    Navigator.of(context).pop();
-                    
-                    // 홈으로 이동
-                    Navigator.of(context).popUntil((route) => route.isFirst);
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: const Text('상품이 삭제되었습니다.'),
-                        backgroundColor: AppColors.success,
-                      ),
-                    );
-                  }
+                  // 저장된 navigator와 scaffoldMessenger 사용
+                  navigator.pop(); // Hide loading dialog
+                  
+                  // 홈으로 이동하면서 result 전달
+                  navigator.popUntil((route) => route.isFirst);
+                  
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: const Text('상품이 삭제되었습니다.'),
+                      backgroundColor: AppColors.success,
+                    ),
+                  );
+
+                  // 홈 화면 강제 새로고침  
+                  Future.delayed(const Duration(milliseconds: 500), () {
+                    if (navigator.canPop()) {
+                      MainNavigation.refreshHome(navigator.context);
+                    }
+                  });
 
                 } catch (e) {
-                  // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
-                  // 이 로그를 확인하는 것이 가장 중요합니다!
-                  // ★★★★★★★★★★★★★★★★★★★★★★★★★★★
                   log('🔥🔥🔥 Product deletion failed: $e');
                   
-                  if (mounted) {
-                    // Hide loading dialog if it's showing
-                    if (Navigator.canPop(context)) {
-                      Navigator.of(context).pop();
-                    }
-                    
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text('삭제에 실패했습니다: ${e.toString()}'),
-                        backgroundColor: AppColors.error,
-                      ),
-                    );
+                  // 저장된 navigator와 scaffoldMessenger 사용
+                  if (navigator.canPop()) {
+                    navigator.pop(); // Hide loading dialog
                   }
+                  
+                  scaffoldMessenger.showSnackBar(
+                    SnackBar(
+                      content: Text('삭제에 실패했습니다: ${e.toString()}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
                 }
               },
               child: const Text('삭제'),

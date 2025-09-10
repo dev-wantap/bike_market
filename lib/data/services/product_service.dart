@@ -167,28 +167,47 @@ class ProductService {
   }
 
   static Future<void> deleteProduct(String productId) async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw Exception('로그인이 필요합니다.');
+    }
+
+    final intId = int.tryParse(productId);
+    if (intId == null) throw Exception('유효하지 않은 상품 ID입니다.');
+
     try {
-      final user = _supabase.auth.currentUser;
-      if (user == null) {
-        throw Exception('로그인이 필요합니다.');
-      }
+      // 1. 이미지 URL 목록 확보
+      final productData = await _supabase
+          .from('products')
+          .select('image_urls')
+          .eq('id', intId)
+          .eq('seller_id', user.id) // 본인 소유 상품만
+          .single();
+      
+      final imageUrls = List<String>.from(productData['image_urls'] ?? []);
 
-      // productId가 숫자인지 확인
-      final id = int.tryParse(productId);
-      if (id == null) {
-        throw Exception('유효하지 않은 상품 ID입니다.');
-      }
-
+      // 2. DB 레코드 먼저 삭제
       await _supabase
           .from('products')
           .delete()
-          .eq('id', id)
+          .eq('id', intId)
           .eq('seller_id', user.id);
+
+      // 3. 스토리지 파일 삭제
+      if (imageUrls.isNotEmpty) {
+        final filePaths = imageUrls.map((url) => 
+          url.substring(url.indexOf('product-images/') + 'product-images/'.length)
+        ).toList();
+        
+        await _supabase.storage.from('product-images').remove(filePaths);
+        log('Deleted ${filePaths.length} images from storage');
+      }
 
       log('Product deleted successfully: $productId');
     } catch (e) {
-      log('Error deleting product: $e');
-      throw Exception('상품을 삭제할 수 없습니다.');
+      log('Product deletion process failed: $e');
+      // 사용자에게는 포괄적인 에러 메시지를 전달
+      throw Exception('상품 삭제 중 오류가 발생했습니다.');
     }
   }
 }

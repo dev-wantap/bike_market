@@ -12,6 +12,12 @@ class MainNavigation extends StatefulWidget {
 
   @override
   State<MainNavigation> createState() => _MainNavigationState();
+
+  // 외부에서 접근 가능한 static 메소드
+  static void refreshHome(BuildContext context) {
+    final mainNavigation = context.findAncestorStateOfType<_MainNavigationState>();
+    mainNavigation?._refreshHomeScreen();
+  }
 }
 
 class _MainNavigationState extends State<MainNavigation> {
@@ -66,6 +72,11 @@ class _MainNavigationState extends State<MainNavigation> {
           setState(() {
             _currentIndex = index;
           });
+          
+          // 홈 탭으로 전환할 때마다 데이터 새로고침
+          if (index == 0) {
+            _refreshHomeScreen();
+          }
         },
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,

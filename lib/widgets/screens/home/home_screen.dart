@@ -34,8 +34,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchData();
   }
 
+
   void refreshData() {
-    _fetchData();
+    _handleRefresh();
   }
 
   Future<void> _fetchData() async {
@@ -66,6 +67,14 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _handleRefresh() async {
+    setState(() {
+      _isLoadingPopular = true;
+      _isLoadingRecent = true;
+    });
+    await _fetchData();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,19 +88,22 @@ class _HomeScreenState extends State<HomeScreen> {
           // Handle notification tap
         },
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildBannerCarousel(),
-            const SizedBox(height: AppDimensions.spacingLarge),
-            _buildCategorySection(),
-            const SizedBox(height: AppDimensions.spacingLarge),
-            _buildPopularSection(context),
-            const SizedBox(height: AppDimensions.spacingLarge),
-            _buildRecentSection(context),
-            const SizedBox(height: AppDimensions.spacingLarge),
-          ],
+      body: RefreshIndicator(
+        onRefresh: _handleRefresh,
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _buildBannerCarousel(),
+              const SizedBox(height: AppDimensions.spacingLarge),
+              _buildCategorySection(),
+              const SizedBox(height: AppDimensions.spacingLarge),
+              _buildPopularSection(context),
+              const SizedBox(height: AppDimensions.spacingLarge),
+              _buildRecentSection(context),
+              const SizedBox(height: AppDimensions.spacingLarge),
+            ],
+          ),
         ),
       ),
     );
