@@ -191,12 +191,7 @@ class ProductService {
 
       // 이미지 URL 리스트를 로컬 변수에 복사하여 저장
       localImageUrls = List<String>.from(productData['image_urls'] ?? []);
-      log('Retrieved image URLs: ${localImageUrls.length} images');
-
-      // 각 URL을 상세히 로깅
-      for (int i = 0; i < localImageUrls.length; i++) {
-        log('Image URL [$i]: ${localImageUrls[i]}');
-      }
+      log('Retrieved ${localImageUrls.length} image URLs for deletion');
 
       // 2. DB에서 상품 레코드 삭제
       await _supabase
@@ -209,174 +204,47 @@ class ProductService {
 
       // 3. 로컬에 저장된 이미지 URL을 사용하여 스토리지에서 직접 삭제
       if (localImageUrls.isNotEmpty) {
-        log('Processing storage deletion for ${localImageUrls.length} images');
-
+        // URL에서 파일 경로 추출
         final filePaths = <String>[];
-
-        for (int i = 0; i < localImageUrls.length; i++) {
-          final url = localImageUrls[i];
-          log('Processing URL [$i]: $url');
-
+        for (final url in localImageUrls) {
           try {
-            // URL에서 파일 경로 추출
             final uri = Uri.parse(url);
-            log(
-              'Parsed URI - scheme: ${uri.scheme}, host: ${uri.host}, path: ${uri.path}',
-            );
-
             final path = uri.path;
-
-            // product-images/ 이후의 경로만 추출
             if (path.contains('product-images/')) {
               final extractedPath = path.substring(
                 path.indexOf('product-images/') + 'product-images/'.length,
               );
               filePaths.add(extractedPath);
-              log('Extracted file path [$i]: $extractedPath');
-            } else {
-              log('Warning: URL does not contain product-images/ path: $url');
             }
           } catch (e) {
-            log('Error parsing URL [$i]: $url, Error: $e');
+            log('Error parsing URL: $url, Error: $e');
           }
-        }
-
-        log('Final file paths to delete: ${filePaths.length} files');
-        for (int i = 0; i < filePaths.length; i++) {
-          log('File path [$i]: ${filePaths[i]}');
         }
 
         if (filePaths.isNotEmpty) {
           try {
-            // 삭제 전 파일 존재 여부 확인
-            log('Checking file existence before deletion...');
-            for (final filePath in filePaths) {
-              try {
-                final fileInfo = await _supabase.storage
-                    .from('product-images')
-                    .info(filePath);
-                log(
-                  'File exists before deletion: $filePath, info: ${fileInfo.toString()}',
-                );
-              } catch (e) {
-                log(
-                  'File does not exist or error checking: $filePath, error: $e',
-                );
-              }
-            }
-
             // Edge Function을 통한 파일 삭제
-            log('Attempting to delete files via Edge Function...');
-            log('Files to delete: $filePaths');
+            final response = await _supabase.functions.invoke(
+              'delete-storage-file',
+              body: {'filePaths': filePaths},
+            );
 
-            try {
-              final response = await _supabase.functions.invoke(
-                'delete-storage-file',
-                body: {'filePaths': filePaths},
-              );
-
-              log('Edge Function response status: ${response.status}');
-              log('Edge Function response data: ${response.data}');
-
-              if (response.status == 200 && response.data != null) {
-                final responseData = response.data as Map<String, dynamic>;
-                if (responseData['success'] == true) {
-                  log('SUCCESS: Files deleted via Edge Function');
-                  log('Deleted files: ${responseData['deletedFiles']}');
-                } else {
-                  log('Edge Function reported failure: ${responseData['error']}');
-                }
-              } else {
-                log('Edge Function call failed with status: ${response.status}');
-                if (response.data != null) {
-                  log('Error details: ${response.data}');
-                }
-              }
-            } catch (e) {
-              log('Error calling Edge Function: $e');
-            }
-
-            // 삭제 후 파일 존재 여부 재확인
-            log('Checking file existence after deletion...');
-            bool allDeleted = true;
-            for (final filePath in filePaths) {
-              try {
-                final fileInfo = await _supabase.storage
-                    .from('product-images')
-                    .info(filePath);
+            if (response.status == 200 && response.data != null) {
+              final responseData = response.data as Map<String, dynamic>;
+              if (responseData['success'] == true) {
                 log(
-                  'WARNING: File still exists after deletion: $filePath, info: ${fileInfo.toString()}',
+                  'Successfully deleted ${filePaths.length} images from storage',
                 );
-                allDeleted = false;
-              } catch (e) {
-                log('Confirmed: File deleted successfully: $filePath');
+              } else {
+                log('Storage deletion failed: ${responseData['error']}');
               }
-            }
-
-            if (allDeleted) {
-              log(
-                'Successfully deleted ${filePaths.length} images from storage',
-              );
             } else {
-              log('ERROR: Some files were not deleted from storage');
-
-              // 개별 파일 삭제 시도
-              log('Attempting individual file deletion...');
-              for (final filePath in filePaths) {
-                try {
-                  final individualResponse = await _supabase.storage
-                      .from('product-images')
-                      .remove([filePath]);
-                  log(
-                    'Individual delete response for $filePath: $individualResponse',
-                  );
-
-                  // 개별 삭제 후 확인
-                  try {
-                    await _supabase.storage
-                        .from('product-images')
-                        .info(filePath);
-                    log('Individual deletion failed for: $filePath');
-                  } catch (e) {
-                    log('Individual deletion successful for: $filePath');
-                  }
-                } catch (e) {
-                  log('Individual deletion error for $filePath: $e');
-                }
-              }
+              log('Edge Function call failed with status: ${response.status}');
             }
-          } catch (storageError) {
-            log('Storage deletion failed: $storageError');
-            log('Storage error type: ${storageError.runtimeType}');
-
-            // Storage 버킷 확인
-            try {
-              final buckets = await _supabase.storage.listBuckets();
-              log('Available buckets: ${buckets.map((b) => b.name).toList()}');
-            } catch (e) {
-              log('Could not list buckets: $e');
-            }
-
-            // 파일 존재 여부 확인
-            try {
-              final files = await _supabase.storage
-                  .from('product-images')
-                  .list();
-              log('Files in product-images bucket: ${files.length}');
-              for (final file in files.take(5)) {
-                log('Sample file: ${file.name}');
-              }
-            } catch (e) {
-              log('Could not list files in bucket: $e');
-            }
-
-            throw storageError;
+          } catch (e) {
+            log('Error calling Edge Function: $e');
           }
-        } else {
-          log('No valid file paths extracted from URLs');
         }
-      } else {
-        log('No images to delete from storage');
       }
 
       log('Product deletion completed successfully: $productId');
@@ -410,15 +278,19 @@ class ProductService {
 
           if (filePaths.isNotEmpty) {
             log('Cleanup: attempting to delete ${filePaths.length} files');
-            final cleanupResponse = await _supabase.storage
-                .from('product-images')
-                .remove(filePaths);
-            log('Cleanup response: $cleanupResponse');
-            log('Cleanup: deleted ${filePaths.length} remaining images');
+            final cleanupResponse = await _supabase.functions.invoke(
+              'delete-storage-file',
+              body: {'filePaths': filePaths},
+            );
+
+            if (cleanupResponse.status == 200) {
+              log('Cleanup: successfully deleted remaining images');
+            } else {
+              log('Cleanup failed with status: ${cleanupResponse.status}');
+            }
           }
         } catch (cleanupError) {
           log('Cleanup failed: $cleanupError');
-          log('Cleanup error type: ${cleanupError.runtimeType}');
         }
       }
 
