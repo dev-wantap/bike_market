@@ -7,6 +7,7 @@ import '../../../core/constants/text_styles.dart';
 import '../../../data/dummy_data.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/product_service.dart';
+import '../../../data/services/favorite_service.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../../common/category_item.dart';
@@ -51,10 +52,14 @@ class _HomeScreenState extends State<HomeScreen> {
       final popular = await popularFuture;
       final recent = await recentFuture;
 
+      // 찜 상태 업데이트
+      final updatedPopular = await _updateFavoriteStatus(popular);
+      final updatedRecent = await _updateFavoriteStatus(recent);
+
       if (mounted) {
         setState(() {
-          _popularProducts = popular;
-          _recentProducts = recent;
+          _popularProducts = updatedPopular;
+          _recentProducts = updatedRecent;
           _isLoadingPopular = false;
           _isLoadingRecent = false;
         });
@@ -89,10 +94,14 @@ class _HomeScreenState extends State<HomeScreen> {
       final popular = await popularFuture;
       final recent = await recentFuture;
 
+      // 찜 상태 업데이트
+      final updatedPopular = await _updateFavoriteStatus(popular);
+      final updatedRecent = await _updateFavoriteStatus(recent);
+
       if (mounted) {
         setState(() {
-          _popularProducts = popular;
-          _recentProducts = recent;
+          _popularProducts = updatedPopular;
+          _recentProducts = updatedRecent;
           _isLoadingPopular = false;
           _isLoadingRecent = false;
         });
@@ -105,6 +114,54 @@ class _HomeScreenState extends State<HomeScreen> {
           _isLoadingPopular = false;
           _isLoadingRecent = false;
         });
+      }
+    }
+  }
+
+  Future<List<Product>> _updateFavoriteStatus(List<Product> products) async {
+    final updatedProducts = <Product>[];
+    for (final product in products) {
+      final isFavorite = await FavoriteService.isFavorite(product.id);
+      updatedProducts.add(product.copyWith(isFavorite: isFavorite));
+    }
+    return updatedProducts;
+  }
+
+  Future<void> _toggleFavorite(Product product) async {
+    try {
+      if (product.isFavorite) {
+        await FavoriteService.removeFavorite(product.id);
+      } else {
+        await FavoriteService.addFavorite(product.id);
+      }
+
+      // 상태 업데이트
+      setState(() {
+        // 인기 상품 목록에서 해당 상품 찾아서 업데이트
+        final popularIndex = _popularProducts.indexWhere((p) => p.id == product.id);
+        if (popularIndex != -1) {
+          _popularProducts[popularIndex] = _popularProducts[popularIndex].copyWith(
+            isFavorite: !product.isFavorite,
+          );
+        }
+
+        // 최신 상품 목록에서 해당 상품 찾아서 업데이트
+        final recentIndex = _recentProducts.indexWhere((p) => p.id == product.id);
+        if (recentIndex != -1) {
+          _recentProducts[recentIndex] = _recentProducts[recentIndex].copyWith(
+            isFavorite: !product.isFavorite,
+          );
+        }
+      });
+    } catch (e) {
+      log('Error toggling favorite: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(product.isFavorite ? '찜 해제에 실패했습니다.' : '찜하기에 실패했습니다.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
       }
     }
   }
@@ -309,9 +366,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           );
                         },
-                        onFavorite: () {
-                          // Handle favorite toggle
-                        },
+                        onFavorite: () => _toggleFavorite(product),
                       ),
                     );
                   },
@@ -367,9 +422,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                       );
                     },
-                    onFavorite: () {
-                      // Handle favorite toggle
-                    },
+                    onFavorite: () => _toggleFavorite(product),
                   );
                 },
               ),

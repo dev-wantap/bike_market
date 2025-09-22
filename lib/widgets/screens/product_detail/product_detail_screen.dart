@@ -7,6 +7,7 @@ import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/product_service.dart';
+import '../../../data/services/favorite_service.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../chat/chat_room_screen.dart';
@@ -52,9 +53,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final isOwner =
           currentUser != null && currentUser.id == product.seller.id;
 
+      // 찜 상태 확인
+      final isFavorite = await FavoriteService.isFavorite(widget.productId);
+
       setState(() {
-        _product = product;
-        _isFavorite = product.isFavorite;
+        _product = product.copyWith(isFavorite: isFavorite);
+        _isFavorite = isFavorite;
         _isOwner = isOwner;
         _isLoading = false;
       });
@@ -78,6 +82,31 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     } catch (e) {
       log('Failed to increment view count via RPC: $e');
+    }
+  }
+
+  Future<void> _toggleFavorite() async {
+    try {
+      if (_isFavorite) {
+        await FavoriteService.removeFavorite(widget.productId);
+      } else {
+        await FavoriteService.addFavorite(widget.productId);
+      }
+
+      setState(() {
+        _isFavorite = !_isFavorite;
+        _product = _product?.copyWith(isFavorite: _isFavorite);
+      });
+    } catch (e) {
+      log('Error toggling favorite: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_isFavorite ? '찜 해제에 실패했습니다.' : '찜하기에 실패했습니다.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
     }
   }
 
@@ -547,11 +576,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     return Row(
       children: [
         GestureDetector(
-          onTap: () {
-            setState(() {
-              _isFavorite = !_isFavorite;
-            });
-          },
+          onTap: _toggleFavorite,
           child: Container(
             width: 48,
             height: 48,

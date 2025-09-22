@@ -1,17 +1,62 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
-import '../../../data/dummy_data.dart';
+import '../../../data/models/product.dart';
+import '../../../data/services/favorite_service.dart';
 import '../../common/product_card.dart';
 import '../product_detail/product_detail_screen.dart';
 
-class FavoritesScreen extends StatelessWidget {
+class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
 
   @override
+  State<FavoritesScreen> createState() => _FavoritesScreenState();
+}
+
+class _FavoritesScreenState extends State<FavoritesScreen> {
+  List<Product> _favoriteProducts = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchFavoriteProducts();
+  }
+
+  Future<void> _fetchFavoriteProducts() async {
+    try {
+      final products = await FavoriteService.getFavoriteProducts();
+      if (mounted) {
+        setState(() {
+          _favoriteProducts = products;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      log('Error fetching favorite products: $e');
+      if (mounted) {
+        setState(() {
+          _favoriteProducts = [];
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final favoriteProducts = DummyData.favoriteProducts;
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('찜한 상품'),
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -19,7 +64,7 @@ class FavoritesScreen extends StatelessWidget {
         backgroundColor: AppColors.surface,
         elevation: 0,
       ),
-      body: favoriteProducts.isEmpty
+      body: _favoriteProducts.isEmpty
           ? _buildEmptyState()
           : Column(
               children: [
@@ -28,7 +73,7 @@ class FavoritesScreen extends StatelessWidget {
                   child: Row(
                     children: [
                       Text(
-                        '찜한 상품 ${favoriteProducts.length}개',
+                        '찜한 상품 ${_favoriteProducts.length}개',
                         style: AppTextStyles.subtitle1,
                       ),
                       const Spacer(),
@@ -53,22 +98,24 @@ class FavoritesScreen extends StatelessWidget {
                           crossAxisSpacing: AppDimensions.spacingMedium,
                           mainAxisSpacing: AppDimensions.spacingMedium,
                         ),
-                    itemCount: favoriteProducts.length,
+                    itemCount: _favoriteProducts.length,
                     itemBuilder: (context, index) {
-                      final product = favoriteProducts[index];
+                      final product = _favoriteProducts[index];
                       return ProductCard(
                         product: product,
                         type: ProductCardType.grid,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  ProductDetailScreen(productId: product.id),
+                              builder: (context) => ProductDetailScreen(
+                                productId: product.id,
+                                onProductDeleted: _fetchFavoriteProducts,
+                              ),
                             ),
                           );
                         },
                         onFavorite: () {
-                          _showRemoveFavoriteDialog(context, product.title);
+                          _showRemoveFavoriteDialog(context, product);
                         },
                       );
                     },
@@ -105,29 +152,51 @@ class FavoritesScreen extends StatelessWidget {
     );
   }
 
-  void _showRemoveFavoriteDialog(BuildContext context, String productTitle) {
+  void _showRemoveFavoriteDialog(BuildContext context, Product product) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('찜 해제'),
-        content: Text('$productTitle을(를) 찜 목록에서 제거하시겠습니까?'),
+        content: Text('${product.title}을(를) 찜 목록에서 제거하시겠습니까?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
             child: const Text('취소'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('찜 목록에서 제거되었습니다')));
+              await _removeFavorite(product);
             },
             child: const Text('제거'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _removeFavorite(Product product) async {
+    try {
+      await FavoriteService.removeFavorite(product.id);
+      setState(() {
+        _favoriteProducts.removeWhere((p) => p.id == product.id);
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('찜 목록에서 제거되었습니다')),
+        );
+      }
+    } catch (e) {
+      log('Error removing favorite: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('찜 해제에 실패했습니다'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 
   void _showDeleteAllDialog(BuildContext context) {
@@ -142,16 +211,38 @@ class FavoritesScreen extends StatelessWidget {
             child: const Text('취소'),
           ),
           ElevatedButton(
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(context);
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('모든 찜 상품이 삭제되었습니다')));
+              await _removeAllFavorites();
             },
             child: const Text('삭제'),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _removeAllFavorites() async {
+    try {
+      await FavoriteService.removeAllFavorites();
+      setState(() {
+        _favoriteProducts.clear();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('모든 찜 상품이 삭제되었습니다')),
+        );
+      }
+    } catch (e) {
+      log('Error removing all favorites: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('전체 삭제에 실패했습니다'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
   }
 }
