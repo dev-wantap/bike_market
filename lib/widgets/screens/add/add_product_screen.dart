@@ -33,13 +33,16 @@ class _AddProductScreenState extends State<AddProductScreen> {
   String _selectedCategory = '';
   String _selectedCondition = '좋음';
   bool _isNegotiable = false;
-  final List<File> _selectedImages = [];
-  final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
 
-  // 수정 모드용
+  // --- 이미지 상태 관리 ---
+  final List<File> _newlySelectedImages = []; // 새로 추가된 이미지 파일
+  final List<String> _deletedImageUrls = []; // 삭제될 기존 이미지 URL
+  List<String> _currentImageUrls = []; // 현재 유지되고 있는 기존 이미지 URL
+  final ImagePicker _imagePicker = ImagePicker();
+  // ---
+
   bool get isEditMode => widget.productToEdit != null;
-  List<String> _initialImageUrls = [];
 
   final List<String> _categories = [
     '로드바이크',
@@ -72,7 +75,6 @@ class _AddProductScreenState extends State<AddProductScreen> {
         _ThousandsSeparatorInputFormatter()._addCommas(product.price.toString());
     _locationController.text = product.location;
 
-    // 카테고리 ID를 이름으로 변환
     final categoryMap = {
       'road': '로드바이크',
       'mtb': '산악자전거',
@@ -83,11 +85,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
     };
     _selectedCategory = categoryMap[product.category] ?? '기타';
 
-    // TODO: 상품 상태, 가격 제안 여부도 DB에 추가하고 초기화해야 함
-    // _selectedCondition = product.condition;
-    // _isNegotiable = product.isNegotiable;
-
-    _initialImageUrls = product.images;
+    _currentImageUrls = List<String>.from(product.images);
   }
 
   @override
@@ -100,10 +98,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Future<void> _pickImage() async {
-    if (_selectedImages.length >= 5) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('최대 5장까지 선택할 수 있습니다.')));
+    final totalImages = _currentImageUrls.length + _newlySelectedImages.length;
+    if (totalImages >= 5) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(const SnackBar(content: Text('최대 5장까지 선택할 수 있습니다.')));
       return;
     }
 
@@ -146,19 +144,25 @@ class _AddProductScreenState extends State<AddProductScreen> {
 
       if (pickedFile != null) {
         setState(() {
-          _selectedImages.add(File(pickedFile.path));
+          _newlySelectedImages.add(File(pickedFile.path));
         });
       }
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('이미지 선택 중 오류가 발생했습니다: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('이미지 선택 중 오류가 발생했습니다: $e')));
     }
   }
 
-  void _removeImage(int index) {
+  void _removeNewImage(int index) {
     setState(() {
-      _selectedImages.removeAt(index);
+      _newlySelectedImages.removeAt(index);
+    });
+  }
+
+  void _removeExistingImage(int index) {
+    setState(() {
+      final removedUrl = _currentImageUrls.removeAt(index);
+      _deletedImageUrls.add(removedUrl);
     });
   }
 
@@ -185,11 +189,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         if (retryCount >= maxRetries) {
           throw Exception('이미지 업로드 실패 (${maxRetries}회 시도): ${e.toString()}');
         }
-
         await Future.delayed(Duration(seconds: retryCount * 2));
       }
     }
-
     throw Exception('이미지 업로드 실패');
   }
 
@@ -260,54 +262,72 @@ class _AddProductScreenState extends State<AddProductScreen> {
             Row(
               children: [
                 Text('상품 사진', style: AppTextStyles.subtitle1),
-                if (!isEditMode) ...[
-                  const SizedBox(width: AppDimensions.spacingSmall),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingSmall,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.error,
-                      borderRadius: BorderRadius.circular(
-                        AppDimensions.radiusSmall,
-                      ),
-                    ),
-                    child: const Text(
-                      '필수',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                const SizedBox(width: AppDimensions.spacingSmall),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.paddingSmall, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: AppColors.error,
+                    borderRadius:
+                        BorderRadius.circular(AppDimensions.radiusSmall),
                   ),
-                ]
+                  child: const Text('필수',
+                      style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold)),
+                ),
               ],
             ),
             const SizedBox(height: AppDimensions.spacingSmall),
             Text(
-              isEditMode
-                  ? '이미지 수정은 다음 단계에서 지원될 예정입니다.'
-                  : '상품 사진을 등록해주세요 (최대 5장)',
-              style: AppTextStyles.caption.copyWith(
-                color: AppColors.textSecondary,
-              ),
+              '상품 사진을 등록해주세요 (최대 5장)',
+              style: AppTextStyles.caption
+                  .copyWith(color: AppColors.textSecondary),
             ),
             const SizedBox(height: AppDimensions.spacingMedium),
             SizedBox(
               height: 100,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: isEditMode ? _initialImageUrls.length : 5,
+                itemCount: _currentImageUrls.length +
+                    _newlySelectedImages.length +
+                    1, // +1 for add button
                 itemBuilder: (context, index) {
-                  return Container(
-                    width: 100,
-                    margin: const EdgeInsets.only(
-                      right: AppDimensions.marginSmall,
-                    ),
-                    child: _buildImageSlot(index),
-                  );
+                  final totalImages =
+                      _currentImageUrls.length + _newlySelectedImages.length;
+                  if (index < totalImages) {
+                    // Existing or new images
+                    final isExisting = index < _currentImageUrls.length;
+                    final item = isExisting
+                        ? _currentImageUrls[index]
+                        : _newlySelectedImages[
+                            index - _currentImageUrls.length];
+                    return Container(
+                      width: 100,
+                      margin:
+                          const EdgeInsets.only(right: AppDimensions.marginSmall),
+                      child: _buildImageSlot(
+                        item: item,
+                        onRemove: () {
+                          if (isExisting) {
+                            _removeExistingImage(index);
+                          } else {
+                            _removeNewImage(index - _currentImageUrls.length);
+                          }
+                        },
+                      ),
+                    );
+                  } else if (totalImages < 5) {
+                    // Add button
+                    return Container(
+                      width: 100,
+                      margin:
+                          const EdgeInsets.only(right: AppDimensions.marginSmall),
+                      child: _buildAddImageSlot(),
+                    );
+                  }
+                  return null; // No more slots
                 },
               ),
             ),
@@ -317,96 +337,75 @@ class _AddProductScreenState extends State<AddProductScreen> {
     );
   }
 
-  Widget _buildImageSlot(int index) {
-    if (isEditMode) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-        child: CachedNetworkImage(
-          imageUrl: _initialImageUrls[index],
-          width: double.infinity,
-          height: double.infinity,
-          fit: BoxFit.cover,
-          placeholder: (context, url) => Container(
-            color: AppColors.border,
-          ),
-          errorWidget: (context, url, error) => const Icon(Icons.error),
+  Widget _buildImageSlot(
+      {required dynamic item, required VoidCallback onRemove}) {
+    return Stack(
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+          child: item is String
+              ? CachedNetworkImage(
+                  imageUrl: item,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                )
+              : Image.file(
+                  item as File,
+                  width: double.infinity,
+                  height: double.infinity,
+                  fit: BoxFit.cover,
+                ),
         ),
-      );
-    }
+        Positioned(
+          top: 4,
+          right: 4,
+          child: GestureDetector(
+            onTap: onRemove,
+            child: Container(
+              width: 20,
+              height: 20,
+              decoration: const BoxDecoration(
+                color: AppColors.error,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.close, color: Colors.white, size: 12),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 
-    // --- 등록 모드 ---
-    final hasImage = index < _selectedImages.length;
+  Widget _buildAddImageSlot() {
     return GestureDetector(
-      onTap: hasImage ? () => _removeImage(index) : _pickImage,
+      onTap: _pickImage,
       child: Container(
         decoration: BoxDecoration(
-          color: hasImage ? AppColors.surface : AppColors.background,
-          border: Border.all(
-            color: hasImage ? Colors.transparent : AppColors.divider,
-            style: hasImage ? BorderStyle.none : BorderStyle.solid,
-          ),
+          color: AppColors.background,
+          border: Border.all(color: AppColors.divider),
           borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
         ),
-        child: hasImage
-            ? Stack(
-                children: [
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusSmall,
-                    ),
-                    child: Image.file(
-                      _selectedImages[index],
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                  Positioned(
-                    top: 4,
-                    right: 4,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.close,
-                        color: Colors.white,
-                        size: 12,
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    index == 0 ? Icons.camera_alt : Icons.add,
-                    color: AppColors.textLight,
-                    size: 24,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    index == 0 ? '대표' : '${index + 1}',
-                    style: AppTextStyles.caption.copyWith(
-                      color: AppColors.textLight,
-                      fontSize: 10,
-                    ),
-                  ),
-                ],
-              ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.camera_alt, color: AppColors.textLight, size: 24),
+            const SizedBox(height: 4),
+            Text(
+              '${_currentImageUrls.length + _newlySelectedImages.length + 1}',
+              style: AppTextStyles.caption
+                  .copyWith(color: AppColors.textLight, fontSize: 10),
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildFormSection() {
     return Container(
-      margin: const EdgeInsets.symmetric(
-        horizontal: AppDimensions.marginMedium,
-      ),
+      margin:
+          const EdgeInsets.symmetric(horizontal: AppDimensions.marginMedium),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(AppDimensions.radiusMedium),
@@ -513,7 +512,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
             if (required) ...[
               const SizedBox(width: AppDimensions.spacingXSmall),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
                 decoration: BoxDecoration(
                   color: AppColors.error,
                   borderRadius: BorderRadius.circular(2),
@@ -521,10 +521,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
                 child: const Text(
                   '필수',
                   style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 8,
-                    fontWeight: FontWeight.bold,
-                  ),
+                      color: Colors.white,
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -552,7 +551,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
               borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
               borderSide: const BorderSide(color: AppColors.primary),
             ),
-            contentPadding: const EdgeInsets.all(AppDimensions.paddingMedium),
+            contentPadding:
+                const EdgeInsets.all(AppDimensions.paddingMedium),
           ),
         ),
       ],
@@ -576,10 +576,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
               child: const Text(
                 '필수',
                 style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 8,
-                  fontWeight: FontWeight.bold,
-                ),
+                    color: Colors.white,
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold),
               ),
             ),
           ],
@@ -598,25 +597,22 @@ class _AddProductScreenState extends State<AddProductScreen> {
               },
               child: Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: AppDimensions.paddingMedium,
-                  vertical: AppDimensions.paddingSmall,
-                ),
+                    horizontal: AppDimensions.paddingMedium,
+                    vertical: AppDimensions.paddingSmall),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.primary : AppColors.surface,
                   border: Border.all(
                     color: isSelected ? AppColors.primary : AppColors.divider,
                   ),
-                  borderRadius: BorderRadius.circular(
-                    AppDimensions.radiusLarge,
-                  ),
+                  borderRadius:
+                      BorderRadius.circular(AppDimensions.radiusLarge),
                 ),
                 child: Text(
                   category,
                   style: AppTextStyles.caption.copyWith(
                     color: isSelected ? Colors.white : AppColors.textSecondary,
-                    fontWeight: isSelected
-                        ? FontWeight.bold
-                        : FontWeight.normal,
+                    fontWeight:
+                        isSelected ? FontWeight.bold : FontWeight.normal,
                   ),
                 ),
               ),
@@ -644,20 +640,17 @@ class _AddProductScreenState extends State<AddProductScreen> {
                   });
                 },
                 child: Container(
-                  margin: const EdgeInsets.only(
-                    right: AppDimensions.marginXSmall,
-                  ),
+                  margin:
+                      const EdgeInsets.only(right: AppDimensions.marginXSmall),
                   padding: const EdgeInsets.symmetric(
-                    vertical: AppDimensions.paddingMedium,
-                  ),
+                      vertical: AppDimensions.paddingMedium),
                   decoration: BoxDecoration(
                     color: isSelected ? AppColors.primary : AppColors.surface,
                     border: Border.all(
                       color: isSelected ? AppColors.primary : AppColors.divider,
                     ),
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusSmall,
-                    ),
+                    borderRadius:
+                        BorderRadius.circular(AppDimensions.radiusSmall),
                   ),
                   child: Text(
                     condition,
@@ -666,9 +659,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
                       color: isSelected
                           ? Colors.white
                           : AppColors.textSecondary,
-                      fontWeight: isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
+                      fontWeight:
+                          isSelected ? FontWeight.bold : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -707,13 +699,12 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
-    if (_selectedImages.isEmpty) {
+    if (_newlySelectedImages.isEmpty) {
       log('이미지 없음');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('상품 사진을 최소 1장 등록해주세요'),
-          backgroundColor: AppColors.error,
-        ),
+            content: Text('상품 사진을 최소 1장 등록해주세요'),
+            backgroundColor: AppColors.error),
       );
       return;
     }
@@ -722,9 +713,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       log('카테고리 선택 안함');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('카테고리를 선택해주세요'),
-          backgroundColor: AppColors.error,
-        ),
+            content: Text('카테고리를 선택해주세요'),
+            backgroundColor: AppColors.error),
       );
       return;
     }
@@ -735,38 +725,21 @@ class _AddProductScreenState extends State<AddProductScreen> {
     });
 
     try {
-      // 이미지들을 병렬로 업로드
-      log('이미지 업로드 시작: ${_selectedImages.length}개');
+      log('이미지 업로드 시작: ${_newlySelectedImages.length}개');
       final imageUrls = <String>[];
-      for (int i = 0; i < _selectedImages.length; i++) {
-        try {
-          log('이미지 ${i + 1} 업로드 중...');
-          final url = await _uploadImage(_selectedImages[i]);
-          imageUrls.add(url);
-          log('이미지 ${i + 1} 업로드 완료: $url');
-        } catch (e) {
-          log('이미지 ${i + 1} 업로드 실패: $e');
-          throw Exception('이미지 ${i + 1} 업로드 실패: ${e.toString()}');
-        }
+      for (int i = 0; i < _newlySelectedImages.length; i++) {
+        final url = await _uploadImage(_newlySelectedImages[i]);
+        imageUrls.add(url);
       }
 
-      // 카테고리 매핑
       final categoryMap = {
-        '로드바이크': 'road',
-        '산악자전거': 'mtb',
-        '하이브리드': 'hybrid',
-        '접이식자전거': 'folding',
-        '전기자전거': 'electric',
-        '미니벨로': 'city',
-        '픽시': 'road',
-        '커스텀': 'road',
-        '부품': 'road',
-        '기타': 'road',
+        '로드바이크': 'road', '산악자전거': 'mtb', '하이브리드': 'hybrid',
+        '접이식자전거': 'folding', '전기자전거': 'electric', '미니벨로': 'city',
+        '픽시': 'road', '커스텀': 'road', '부품': 'road', '기타': 'road',
       };
 
-      // 상품 데이터 생성
       final product = Product(
-        id: '', // 서버에서 자동 생성
+        id: '',
         title: _titleController.text.trim(),
         price: int.parse(_priceController.text.replaceAll(',', '')),
         description: _descriptionController.text.trim(),
@@ -776,42 +749,31 @@ class _AddProductScreenState extends State<AddProductScreen> {
         createdAt: DateTime.now(),
         isFavorite: false,
         seller: Seller(
-          id: Supabase.instance.client.auth.currentUser!.id,
-          nickname: '',
-          profileImage: '',
-          location: _locationController.text.trim(),
-          otherProducts: [],
-        ),
+            id: Supabase.instance.client.auth.currentUser!.id,
+            nickname: '', profileImage: '',
+            location: _locationController.text.trim(), otherProducts: []),
       );
 
-      // ProductService를 사용하여 상품 등록
       log('상품 DB 저장 시작');
       await _insertProduct(product);
       log('상품 DB 저장 완료');
 
       if (mounted) {
         log('상품 등록 성공 - 화면 이동');
-
-        // 상품 등록 성공 알림
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('상품이 등록되었습니다'),
-            backgroundColor: AppColors.success,
-          ),
+              content: Text('상품이 등록되었습니다'),
+              backgroundColor: AppColors.success),
         );
-
-        // 폼 초기화
         _titleController.clear();
         _descriptionController.clear();
         _priceController.clear();
         _locationController.clear();
         setState(() {
-          _selectedImages.clear();
+          _newlySelectedImages.clear();
           _selectedCategory = '';
           _isNegotiable = false;
         });
-
-        // 홈으로 이동
         widget.onProductAdded?.call();
       }
     } catch (e) {
@@ -819,9 +781,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('상품 등록 중 오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
+              content: Text('상품 등록 중 오류가 발생했습니다: $e'),
+              backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -842,24 +803,47 @@ class _AddProductScreenState extends State<AddProductScreen> {
       return;
     }
 
+    final totalImages = _currentImageUrls.length + _newlySelectedImages.length;
+    if (totalImages == 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+            content: Text('상품 사진을 최소 1장 등록해주세요'),
+            backgroundColor: AppColors.error),
+      );
+      return;
+    }
+
     log('로딩 시작: _isUploading = true');
     setState(() {
       _isUploading = true;
     });
 
     try {
-      // 카테고리 매핑
+      // 1. 삭제할 이미지들 스토리지에서 제거
+      if (_deletedImageUrls.isNotEmpty) {
+        log('삭제할 이미지 ${_deletedImageUrls.length}개 스토리지에서 제거 시작');
+        await ProductService.deleteImages(_deletedImageUrls);
+        log('이미지 스토리지에서 제거 완료');
+      }
+
+      // 2. 새로 추가된 이미지들 업로드
+      final newImageUrls = <String>[];
+      if (_newlySelectedImages.isNotEmpty) {
+        log('새 이미지 ${_newlySelectedImages.length}개 업로드 시작');
+        for (final imageFile in _newlySelectedImages) {
+          final url = await _uploadImage(imageFile);
+          newImageUrls.add(url);
+        }
+        log('새 이미지 업로드 완료');
+      }
+
+      // 3. 최종 이미지 URL 목록 생성
+      final finalImageUrls = [..._currentImageUrls, ...newImageUrls];
+
       final categoryMap = {
-        '로드바이크': 'road',
-        '산악자전거': 'mtb',
-        '하이브리드': 'hybrid',
-        '접이식자전거': 'folding',
-        '전기자전거': 'electric',
-        '미니벨로': 'city',
-        '픽시': 'road',
-        '커스텀': 'road',
-        '부품': 'road',
-        '기타': 'road',
+        '로드바이크': 'road', '산악자전거': 'mtb', '하이브리드': 'hybrid',
+        '접이식자전거': 'folding', '전기자전거': 'electric', '미니벨로': 'city',
+        '픽시': 'road', '커스텀': 'road', '부품': 'road', '기타': 'road',
       };
 
       final updatedProduct = widget.productToEdit!.copyWith(
@@ -868,7 +852,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
         description: _descriptionController.text.trim(),
         category: categoryMap[_selectedCategory] ?? 'road',
         location: _locationController.text.trim(),
-        // images는 Phase 1에서 수정하지 않음
+        images: finalImageUrls,
       );
 
       log('상품 DB 업데이트 시작');
@@ -879,11 +863,9 @@ class _AddProductScreenState extends State<AddProductScreen> {
         log('상품 수정 성공 - 화면 이동');
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text('상품 정보가 수정되었습니다'),
-            backgroundColor: AppColors.success,
-          ),
+              content: Text('상품 정보가 수정되었습니다'),
+              backgroundColor: AppColors.success),
         );
-        // 상세 화면으로 돌아가서 리프레시 될 수 있도록 데이터 전달
         Navigator.of(context).pop(true);
       }
     } catch (e) {
@@ -891,9 +873,8 @@ class _AddProductScreenState extends State<AddProductScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('상품 수정 중 오류가 발생했습니다: $e'),
-            backgroundColor: AppColors.error,
-          ),
+              content: Text('상품 수정 중 오류가 발생했습니다: $e'),
+              backgroundColor: AppColors.error),
         );
       }
     } finally {
@@ -932,17 +913,11 @@ class _ThousandsSeparatorInputFormatter extends TextInputFormatter {
     if (newValue.text.isEmpty) {
       return newValue;
     }
-
-    // Remove all non-digit characters
     String digits = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
-
     if (digits.isEmpty) {
       return const TextEditingValue();
     }
-
-    // Format with commas
     String formatted = _addCommas(digits);
-
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),

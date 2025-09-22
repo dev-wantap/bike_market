@@ -154,6 +154,7 @@ class ProductService {
             'price': product.price,
             'category': product.category,
             'location': product.location,
+            'image_urls': product.images, // 이미지 URL 업데이트 추가
             'updated_at': DateTime.now().toIso8601String(),
           })
           .eq('id', product.id)
@@ -347,6 +348,55 @@ class ProductService {
 
       // 사용자에게는 포괄적인 에러 메시지를 전달
       throw Exception('상품 삭제 중 오류가 발생했습니다.');
+    }
+  }
+
+  static Future<void> deleteImages(List<String> imageUrls) async {
+    if (imageUrls.isEmpty) return;
+
+    try {
+      // URL에서 파일 경로 추출
+      final filePaths = <String>[];
+      for (final url in imageUrls) {
+        try {
+          final uri = Uri.parse(url);
+          final path = uri.path;
+          if (path.contains('product-images/')) {
+            final extractedPath = path.substring(
+              path.indexOf('product-images/') + 'product-images/'.length,
+            );
+            filePaths.add(extractedPath);
+          }
+        } catch (e) {
+          log('Error parsing URL for deletion: $url, Error: $e');
+        }
+      }
+
+      if (filePaths.isNotEmpty) {
+        log('Attempting to delete ${filePaths.length} images from storage.');
+        final response = await _supabase.functions.invoke(
+          'delete-storage-file',
+          body: {'filePaths': filePaths},
+        );
+
+        if (response.status == 200 && response.data != null) {
+          final responseData = response.data as Map<String, dynamic>;
+          if (responseData['success'] == true) {
+            log(
+              'Successfully deleted ${filePaths.length} images from storage',
+            );
+          } else {
+            // 일부 또는 전체 삭제 실패 시에도 에러를 던지지 않고 로그만 남김
+            log('Storage deletion failed: ${responseData['error']}');
+          }
+        } else {
+          log('Edge Function call failed with status: ${response.status}');
+        }
+      }
+    } catch (e) {
+      log('Error during image deletion: $e');
+      // 에러를 던져서 상위 호출자가 처리하도록 할 수도 있음
+      // throw Exception('이미지 삭제 중 오류가 발생했습니다.');
     }
   }
 }
