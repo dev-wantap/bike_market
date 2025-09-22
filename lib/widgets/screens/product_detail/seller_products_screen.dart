@@ -10,10 +10,7 @@ import '../product_detail/product_detail_screen.dart';
 class SellerProductsScreen extends StatefulWidget {
   final Seller seller;
 
-  const SellerProductsScreen({
-    super.key,
-    required this.seller,
-  });
+  const SellerProductsScreen({super.key, required this.seller});
 
   @override
   State<SellerProductsScreen> createState() => _SellerProductsScreenState();
@@ -67,8 +64,8 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _products.isEmpty
-              ? _buildEmptyState()
-              : _buildProductList(),
+          ? _buildEmptyState()
+          : _buildProductList(),
     );
   }
 
@@ -92,9 +89,7 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
           const SizedBox(height: AppDimensions.spacingSmall),
           Text(
             '${widget.seller.nickname}님이 등록한 상품이 없습니다.',
-            style: AppTextStyles.body2.copyWith(
-              color: AppColors.textSecondary,
-            ),
+            style: AppTextStyles.body2.copyWith(color: AppColors.textSecondary),
           ),
         ],
       ),
@@ -126,7 +121,9 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
                 radius: AppDimensions.avatarMedium / 2,
                 backgroundColor: AppColors.primary,
                 child: Text(
-                  widget.seller.nickname.isNotEmpty ? widget.seller.nickname[0] : '?',
+                  widget.seller.nickname.isNotEmpty
+                      ? widget.seller.nickname[0]
+                      : '?',
                   style: AppTextStyles.subtitle1.copyWith(color: Colors.white),
                 ),
               ),
@@ -140,10 +137,7 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
                       style: AppTextStyles.subtitle1,
                     ),
                     const SizedBox(height: AppDimensions.spacingXSmall),
-                    Text(
-                      widget.seller.location,
-                      style: AppTextStyles.caption,
-                    ),
+                    Text(widget.seller.location, style: AppTextStyles.caption),
                   ],
                 ),
               ),
@@ -154,7 +148,9 @@ class _SellerProductsScreenState extends State<SellerProductsScreen> {
                 ),
                 decoration: BoxDecoration(
                   color: AppColors.primary.withAlpha(26),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusLarge),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusLarge,
+                  ),
                 ),
                 child: Text(
                   '${_products.length}개 상품',

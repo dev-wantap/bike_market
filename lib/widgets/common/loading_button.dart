@@ -148,11 +148,7 @@ class LoadingIconButton extends StatelessWidget {
                 ),
               ),
             )
-          : Icon(
-              icon,
-              color: color,
-              size: size,
-            ),
+          : Icon(icon, color: color, size: size),
     );
   }
 }

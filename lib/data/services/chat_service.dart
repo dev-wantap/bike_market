@@ -46,10 +46,7 @@ class ChatService {
       // 새 채팅방 생성
       final newRoom = await _supabase
           .from('chat_rooms')
-          .insert({
-            'product_id': intProductId,
-            'buyer_id': user.id,
-          })
+          .insert({'product_id': intProductId, 'buyer_id': user.id})
           .select('''
             id, product_id, buyer_id, created_at,
             buyer:profiles!chat_rooms_buyer_id_fkey(
@@ -82,12 +79,16 @@ class ChatService {
       }
 
       // 구매자인 채팅방 (마지막 메시지 포함)
-      final buyerResponse = await _supabase.rpc('get_chat_rooms_with_last_message',
-        params: {'user_id': user.id, 'as_buyer': true});
+      final buyerResponse = await _supabase.rpc(
+        'get_chat_rooms_with_last_message',
+        params: {'user_id': user.id, 'as_buyer': true},
+      );
 
       // 판매자인 채팅방 (마지막 메시지 포함)
-      final sellerResponse = await _supabase.rpc('get_chat_rooms_with_last_message',
-        params: {'user_id': user.id, 'as_buyer': false});
+      final sellerResponse = await _supabase.rpc(
+        'get_chat_rooms_with_last_message',
+        params: {'user_id': user.id, 'as_buyer': false},
+      );
 
       // 두 결과를 합치고 중복 제거
       final allRooms = <Map<String, dynamic>>[];
@@ -111,9 +112,15 @@ class ChatService {
 
       // 시간순 정렬
       final sortedRooms = uniqueRooms.values.toList()
-        ..sort((a, b) => DateTime.parse(b['created_at']).compareTo(DateTime.parse(a['created_at'])));
+        ..sort(
+          (a, b) => DateTime.parse(
+            b['created_at'],
+          ).compareTo(DateTime.parse(a['created_at'])),
+        );
 
-      return sortedRooms.map((json) => ChatRoom.fromJson(json, user.id)).toList();
+      return sortedRooms
+          .map((json) => ChatRoom.fromJson(json, user.id))
+          .toList();
     } catch (e) {
       log('Error fetching chat rooms: $e');
       return [];
@@ -160,9 +167,11 @@ class ChatService {
         .eq('room_id', roomId)
         .order('created_at', ascending: true)
         .asStream()
-        .map((data) => (data as List)
-            .map((json) => Message.fromJson(json, user.id))
-            .toList());
+        .map(
+          (data) => (data as List)
+              .map((json) => Message.fromJson(json, user.id))
+              .toList(),
+        );
   }
 
   /// 채팅방의 기존 메시지 조회 (페이지네이션)

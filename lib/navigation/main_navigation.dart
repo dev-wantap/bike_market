@@ -1,7 +1,8 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../core/constants/colors.dart';
-import '../data/services/chat_service.dart';
+import '../providers/chat_notification_provider.dart';
 import '../widgets/screens/home/home_screen.dart';
 import '../widgets/screens/reservation/reservation_list_screen.dart';
 import '../widgets/screens/add/add_product_screen.dart';
@@ -50,7 +51,6 @@ class _MainNavigationState extends State<MainNavigation> {
     ];
   }
 
-
   void _refreshHomeScreen() {
     log('_refreshHomeScreen called');
     // 직접 HomeScreen의 새로고침 메서드 호출
@@ -89,6 +89,11 @@ class _MainNavigationState extends State<MainNavigation> {
           if (index == 0) {
             _refreshHomeScreen();
           }
+
+          // 채팅 탭으로 전환할 때 글로벌 배지 제거
+          if (index == 3) {
+            context.read<ChatNotificationProvider>().markAllAsRead();
+          }
         },
         selectedItemColor: AppColors.primary,
         unselectedItemColor: AppColors.textSecondary,
@@ -112,15 +117,17 @@ class _MainNavigationState extends State<MainNavigation> {
             label: '등록',
           ),
           BottomNavigationBarItem(
-            icon: StreamBuilder<int>(
-              stream: ChatService.getTotalUnreadCountStream(),
-              builder: (context, snapshot) {
-                final unreadCount = snapshot.data ?? 0;
+            icon: Consumer<ChatNotificationProvider>(
+              builder: (context, chatNotificationProvider, child) {
+                final unreadCount = chatNotificationProvider.totalUnreadCount;
+                final hasGlobalUnread =
+                    chatNotificationProvider.hasGlobalUnread;
+
                 return Stack(
                   children: [
                     const Icon(Icons.chat),
-                    // Badge for unread messages
-                    if (unreadCount > 0)
+                    // Badge for unread messages - 글로벌 배지는 hasGlobalUnread로, 개수는 totalUnreadCount로 표시
+                    if (hasGlobalUnread && unreadCount > 0)
                       Positioned(
                         right: 0,
                         top: 0,
@@ -133,7 +140,7 @@ class _MainNavigationState extends State<MainNavigation> {
                           ),
                           child: Center(
                             child: Text(
-                              '$unreadCount',
+                              unreadCount > 9 ? '9+' : '$unreadCount',
                               style: const TextStyle(
                                 color: Colors.white,
                                 fontSize: 8,

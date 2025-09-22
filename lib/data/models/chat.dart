@@ -25,7 +25,10 @@ class ChatRoom {
     this.lastMessageSenderId,
   });
 
-  factory ChatRoom.fromJson(Map<String, dynamic> json, [String? currentUserId]) {
+  factory ChatRoom.fromJson(
+    Map<String, dynamic> json, [
+    String? currentUserId,
+  ]) {
     final productData = json['products'] as Map<String, dynamic>;
     final product = Product.fromJson(productData);
     final buyerId = json['buyer_id'] as String;
@@ -60,7 +63,9 @@ class ChatRoom {
       unreadCount: 0, // 별도로 계산
       createdAt: DateTime.parse(json['created_at']),
       lastMessageContent: lastMessageContent,
-      lastMessageTimestamp: lastMessageTimeStr != null ? DateTime.parse(lastMessageTimeStr) : null,
+      lastMessageTimestamp: lastMessageTimeStr != null
+          ? DateTime.parse(lastMessageTimeStr)
+          : null,
       lastMessageSenderId: lastMessageSenderId,
     );
   }

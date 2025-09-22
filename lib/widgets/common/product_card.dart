@@ -158,14 +158,18 @@ class ProductCard extends StatelessWidget {
                           else
                             Consumer<FavoriteProvider>(
                               builder: (context, favoriteProvider, child) {
-                                final isFavorite = favoriteProvider.isFavorite(product.id);
+                                final isFavorite = favoriteProvider.isFavorite(
+                                  product.id,
+                                );
                                 return GestureDetector(
                                   onTap: onFavorite,
                                   child: isFavoriteLoading
                                       ? const SizedBox(
                                           width: 20,
                                           height: 20,
-                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
                                         )
                                       : Icon(
                                           isFavorite
@@ -253,20 +257,20 @@ class ProductCard extends StatelessWidget {
                       ],
                     ),
                     child: isFavoriteLoading
-                      ? const Center(
-                          child: SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
+                        ? const Center(
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : Icon(
+                            isFavorite ? Icons.favorite : Icons.favorite_border,
+                            color: isFavorite
+                                ? AppColors.error
+                                : AppColors.textSecondary,
+                            size: AppDimensions.iconSmall,
                           ),
-                        )
-                      : Icon(
-                          isFavorite ? Icons.favorite : Icons.favorite_border,
-                          color: isFavorite
-                              ? AppColors.error
-                              : AppColors.textSecondary,
-                          size: AppDimensions.iconSmall,
-                        ),
                   ),
                 );
               },

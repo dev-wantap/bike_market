@@ -26,7 +26,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
     // FavoriteProvider에서 데이터를 로드
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final favoriteProvider = context.read<FavoriteProvider>();
-      if (favoriteProvider.favoriteProducts.isEmpty && !favoriteProvider.isLoading) {
+      if (favoriteProvider.favoriteProducts.isEmpty &&
+          !favoriteProvider.isLoading) {
         favoriteProvider.loadFavorites();
       }
     });
@@ -60,60 +61,62 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
               : Column(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.all(AppDimensions.paddingMedium),
+                      padding: const EdgeInsets.all(
+                        AppDimensions.paddingMedium,
+                      ),
                       child: Row(
                         children: [
                           Text(
                             '찜한 상품 ${favoriteProducts.length}개',
                             style: AppTextStyles.subtitle1,
+                          ),
+                          const Spacer(),
+                          TextButton(
+                            onPressed: () {
+                              _showDeleteAllDialog(context);
+                            },
+                            child: const Text('전체 삭제'),
+                          ),
+                        ],
                       ),
-                      const Spacer(),
-                      TextButton(
-                        onPressed: () {
-                          _showDeleteAllDialog(context);
-                        },
-                        child: const Text('전체 삭제'),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: GridView.builder(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: AppDimensions.paddingMedium,
                     ),
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 2,
-                      childAspectRatio: 0.7,
-                      crossAxisSpacing: AppDimensions.spacingMedium,
-                      mainAxisSpacing: AppDimensions.spacingMedium,
-                    ),
-                    itemCount: favoriteProducts.length,
-                    itemBuilder: (context, index) {
-                      final product = favoriteProducts[index];
-                      return ProductCard(
-                        product: product,
-                        type: ProductCardType.grid,
-                        onTap: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (context) => ProductDetailScreen(
-                                productId: product.id,
-                              ),
+                    Expanded(
+                      child: GridView.builder(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: AppDimensions.paddingMedium,
+                        ),
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 2,
+                              childAspectRatio: 0.7,
+                              crossAxisSpacing: AppDimensions.spacingMedium,
+                              mainAxisSpacing: AppDimensions.spacingMedium,
                             ),
+                        itemCount: favoriteProducts.length,
+                        itemBuilder: (context, index) {
+                          final product = favoriteProducts[index];
+                          return ProductCard(
+                            product: product,
+                            type: ProductCardType.grid,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) => ProductDetailScreen(
+                                    productId: product.id,
+                                  ),
+                                ),
+                              );
+                            },
+                            onFavorite: () {
+                              _toggleFavorite(context, product);
+                            },
                           );
                         },
-                        onFavorite: () {
-                          _toggleFavorite(context, product);
-                        },
-                      );
-                    },
-                  ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-    );
+        );
       },
     );
   }
@@ -123,8 +126,11 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.favorite_border,
-              size: 80, color: AppColors.textLight),
+          const Icon(
+            Icons.favorite_border,
+            size: 80,
+            color: AppColors.textLight,
+          ),
           const SizedBox(height: AppDimensions.spacingLarge),
           Text(
             '찜한 상품이 없습니다',
@@ -144,8 +150,10 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
 
   Future<void> _toggleFavorite(BuildContext context, Product product) async {
     final favoriteProvider = context.read<FavoriteProvider>();
-    final success =
-        await favoriteProvider.toggleFavorite(product.id, product: product);
+    final success = await favoriteProvider.toggleFavorite(
+      product.id,
+      product: product,
+    );
     if (mounted) {
       if (success) {
         FeedbackHelper.showFavoriteRemoved(context);

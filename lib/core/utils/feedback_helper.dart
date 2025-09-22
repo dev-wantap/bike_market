@@ -10,11 +10,7 @@ class FeedbackHelper {
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.check_circle,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -31,9 +27,7 @@ class FeedbackHelper {
         backgroundColor: AppColors.success,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -44,11 +38,7 @@ class FeedbackHelper {
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.error,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.error, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -65,9 +55,7 @@ class FeedbackHelper {
         backgroundColor: AppColors.error,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 3),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -78,11 +66,7 @@ class FeedbackHelper {
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.info,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.info, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -99,9 +83,7 @@ class FeedbackHelper {
         backgroundColor: AppColors.info,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -112,11 +94,7 @@ class FeedbackHelper {
       SnackBar(
         content: Row(
           children: [
-            const Icon(
-              Icons.warning,
-              color: Colors.white,
-              size: 20,
-            ),
+            const Icon(Icons.warning, color: Colors.white, size: 20),
             const SizedBox(width: 12),
             Expanded(
               child: Text(
@@ -133,9 +111,7 @@ class FeedbackHelper {
         backgroundColor: AppColors.warning,
         behavior: SnackBarBehavior.floating,
         duration: const Duration(seconds: 2),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
     );
   }
@@ -158,7 +134,11 @@ class FeedbackHelper {
     showSuccess(context, '$operation이 완료되었습니다');
   }
 
-  static void showOperationError(BuildContext context, String operation, [String? details]) {
+  static void showOperationError(
+    BuildContext context,
+    String operation, [
+    String? details,
+  ]) {
     final message = details != null
         ? '$operation에 실패했습니다: $details'
         : '$operation에 실패했습니다. 다시 시도해주세요.';

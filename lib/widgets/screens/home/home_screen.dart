@@ -127,7 +127,10 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  List<Product> _updateFavoriteStatus(List<Product> products, FavoriteProvider favoriteProvider) {
+  List<Product> _updateFavoriteStatus(
+    List<Product> products,
+    FavoriteProvider favoriteProvider,
+  ) {
     return products.map((product) {
       final isFavorite = favoriteProvider.isFavorite(product.id);
       return product.copyWith(isFavorite: isFavorite);
@@ -143,7 +146,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final favoriteProvider = context.read<FavoriteProvider>();
 
-    final success = await favoriteProvider.toggleFavorite(product.id, product: product);
+    final success = await favoriteProvider.toggleFavorite(
+      product.id,
+      product: product,
+    );
 
     if (mounted) {
       if (success) {
@@ -355,7 +361,9 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ProductCard(
                         product: product,
                         type: ProductCardType.grid,
-                        isFavoriteLoading: _isTogglingFavorite.contains(product.id),
+                        isFavoriteLoading: _isTogglingFavorite.contains(
+                          product.id,
+                        ),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(

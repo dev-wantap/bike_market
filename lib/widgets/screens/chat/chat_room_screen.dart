@@ -1,5 +1,6 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/colors.dart';
@@ -7,15 +8,13 @@ import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/models/chat.dart';
 import '../../../data/services/chat_service.dart';
+import '../../../providers/chat_notification_provider.dart';
 import '../../common/chat_bubble.dart';
 
 class ChatRoomScreen extends StatefulWidget {
   final ChatRoom chatRoom;
 
-  const ChatRoomScreen({
-    super.key,
-    required this.chatRoom,
-  });
+  const ChatRoomScreen({super.key, required this.chatRoom});
 
   @override
   State<ChatRoomScreen> createState() => _ChatRoomScreenState();
@@ -61,6 +60,13 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
           _isLoading = false;
         });
 
+        // Provider에서 읽음 처리
+        final chatNotificationProvider = context
+            .read<ChatNotificationProvider>();
+        await chatNotificationProvider.markChatRoomAsRead(
+          widget.chatRoom.id.toString(),
+        );
+
         // 스크롤을 맨 아래로
         WidgetsBinding.instance.addPostFrameCallback((_) {
           _scrollToBottom();
@@ -78,22 +84,28 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
 
   void _setupRealtimeSubscription() {
     try {
-      _realtimeChannel = ChatService.subscribeToMessages(
-        widget.chatRoom.id,
-        (message) {
-          if (mounted) {
-            setState(() {
-              _messages.add(message);
-            });
-            _scrollToBottom();
+      _realtimeChannel = ChatService.subscribeToMessages(widget.chatRoom.id, (
+        message,
+      ) {
+        if (mounted) {
+          setState(() {
+            _messages.add(message);
+          });
+          _scrollToBottom();
 
-            // 상대방 메시지인 경우 읽음 처리
-            if (!message.isMe) {
-              ChatService.markMessagesAsRead(widget.chatRoom.id);
-            }
+          // 상대방 메시지인 경우 읽음 처리
+          if (!message.isMe) {
+            ChatService.markMessagesAsRead(widget.chatRoom.id);
+
+            // Provider에서도 읽음 처리
+            final chatNotificationProvider = context
+                .read<ChatNotificationProvider>();
+            chatNotificationProvider.markChatRoomAsRead(
+              widget.chatRoom.id.toString(),
+            );
           }
-        },
-      );
+        }
+      });
     } catch (e) {
       log('Error setting up realtime subscription: $e');
     }
@@ -137,7 +149,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
                 ),
               ),
               const SizedBox(width: AppDimensions.spacingSmall),
-              Text(widget.chatRoom.otherUser.nickname, style: AppTextStyles.subtitle1),
+              Text(
+                widget.chatRoom.otherUser.nickname,
+                style: AppTextStyles.subtitle1,
+              ),
             ],
           ),
         ),
@@ -165,7 +180,10 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ),
             const SizedBox(width: AppDimensions.spacingSmall),
-            Text(widget.chatRoom.otherUser.nickname, style: AppTextStyles.subtitle1),
+            Text(
+              widget.chatRoom.otherUser.nickname,
+              style: AppTextStyles.subtitle1,
+            ),
           ],
         ),
         actions: [

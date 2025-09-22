@@ -1,10 +1,12 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/models/chat.dart';
 import '../../../data/services/chat_service.dart';
+import '../../../providers/chat_notification_provider.dart';
 import 'chat_room_screen.dart';
 
 class ChatListScreen extends StatefulWidget {
@@ -16,7 +18,6 @@ class ChatListScreen extends StatefulWidget {
 
 class _ChatListScreenState extends State<ChatListScreen> {
   List<ChatRoom> _chatRooms = [];
-  Map<int, int> _unreadCounts = {};
   bool _isLoading = true;
 
   @override
@@ -29,26 +30,22 @@ class _ChatListScreenState extends State<ChatListScreen> {
     try {
       final chatRooms = await ChatService.getChatRooms();
 
-      // 각 채팅방의 읽지 않은 메시지 개수 조회
-      final unreadCounts = <int, int>{};
-      for (final chatRoom in chatRooms) {
-        final count = await ChatService.getUnreadMessageCount(chatRoom.id);
-        unreadCounts[chatRoom.id] = count;
-      }
-
       if (mounted) {
         setState(() {
           _chatRooms = chatRooms;
-          _unreadCounts = unreadCounts;
           _isLoading = false;
         });
+
+        // Provider의 안 읽은 개수 동기화
+        final chatNotificationProvider = context
+            .read<ChatNotificationProvider>();
+        await chatNotificationProvider.refreshAllUnreadCounts();
       }
     } catch (e) {
       log('Error fetching chat rooms: $e');
       if (mounted) {
         setState(() {
           _chatRooms = [];
-          _unreadCounts = {};
           _isLoading = false;
         });
       }
@@ -175,28 +172,42 @@ class _ChatListScreenState extends State<ChatListScreen> {
               style: AppTextStyles.subtitle1,
             ),
           ),
-          if ((_unreadCounts[chatRoom.id] ?? 0) > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppDimensions.paddingSmall,
-                vertical: 2,
-              ),
-              decoration: const BoxDecoration(
-                color: AppColors.error,
-                shape: BoxShape.circle,
-              ),
-              constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
-              child: Center(
-                child: Text(
-                  '${_unreadCounts[chatRoom.id] ?? 0}',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
+          Consumer<ChatNotificationProvider>(
+            builder: (context, chatNotificationProvider, child) {
+              final unreadCount = chatNotificationProvider.unreadCountFor(
+                chatRoom.id.toString(),
+              );
+
+              if (unreadCount > 0) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingSmall,
+                    vertical: 2,
                   ),
-                ),
-              ),
-            ),
+                  decoration: const BoxDecoration(
+                    color: AppColors.error,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(
+                    minWidth: 20,
+                    minHeight: 20,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$unreadCount',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                );
+              } else {
+                return const SizedBox.shrink();
+              }
+            },
+          ),
         ],
       ),
       subtitle: Column(
@@ -216,18 +227,26 @@ class _ChatListScreenState extends State<ChatListScreen> {
           Row(
             children: [
               Expanded(
-                child: Text(
-                  chatRoom.lastMessage,
-                  style: AppTextStyles.body2.copyWith(
-                    color: (_unreadCounts[chatRoom.id] ?? 0) > 0
-                        ? AppColors.textPrimary
-                        : AppColors.textSecondary,
-                    fontWeight: (_unreadCounts[chatRoom.id] ?? 0) > 0
-                        ? FontWeight.w500
-                        : FontWeight.normal,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
+                child: Consumer<ChatNotificationProvider>(
+                  builder: (context, chatNotificationProvider, child) {
+                    final unreadCount = chatNotificationProvider.unreadCountFor(
+                      chatRoom.id.toString(),
+                    );
+
+                    return Text(
+                      chatRoom.lastMessage,
+                      style: AppTextStyles.body2.copyWith(
+                        color: unreadCount > 0
+                            ? AppColors.textPrimary
+                            : AppColors.textSecondary,
+                        fontWeight: unreadCount > 0
+                            ? FontWeight.w500
+                            : FontWeight.normal,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    );
+                  },
                 ),
               ),
               Text(
@@ -241,16 +260,16 @@ class _ChatListScreenState extends State<ChatListScreen> {
         ],
       ),
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ChatRoomScreen(
-              chatRoom: chatRoom,
-            ),
-          ),
-        ).then((_) {
-          // 채팅방에서 돌아왔을 때 목록 새로고침
-          _fetchChatRooms();
-        });
+        Navigator.of(context)
+            .push(
+              MaterialPageRoute(
+                builder: (context) => ChatRoomScreen(chatRoom: chatRoom),
+              ),
+            )
+            .then((_) {
+              // 채팅방에서 돌아왔을 때 목록 새로고침
+              _fetchChatRooms();
+            });
       },
     );
   }

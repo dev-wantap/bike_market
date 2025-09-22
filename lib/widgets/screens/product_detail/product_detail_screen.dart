@@ -131,13 +131,18 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     });
 
     final favoriteProvider = context.read<FavoriteProvider>();
-    final success = await favoriteProvider.toggleFavorite(widget.productId, product: _product);
+    final success = await favoriteProvider.toggleFavorite(
+      widget.productId,
+      product: _product,
+    );
 
     if (mounted) {
       setState(() {
         _isFavoriteLoading = false;
         if (_product != null) {
-          _product = _product!.copyWith(isFavorite: favoriteProvider.isFavorite(widget.productId));
+          _product = _product!.copyWith(
+            isFavorite: favoriteProvider.isFavorite(widget.productId),
+          );
         }
       });
 
@@ -515,9 +520,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 onPressed: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => SellerProductsScreen(
-                        seller: _product!.seller,
-                      ),
+                      builder: (context) =>
+                          SellerProductsScreen(seller: _product!.seller),
                     ),
                   );
                 },
@@ -547,9 +551,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => SellerProductsScreen(
-                          seller: _product!.seller,
-                        ),
+                        builder: (context) =>
+                            SellerProductsScreen(seller: _product!.seller),
                       ),
                     );
                   },
@@ -570,72 +573,78 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           child: _isLoadingOtherProducts
               ? const Center(child: CircularProgressIndicator())
               : _otherProducts.isEmpty
-                  ? Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.paddingMedium,
+              ? Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingMedium,
+                  ),
+                  child: Container(
+                    height: AppDimensions.productCardHeight,
+                    decoration: BoxDecoration(
+                      color: AppColors.background,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusMedium,
                       ),
-                      child: Container(
-                        height: AppDimensions.productCardHeight,
-                        decoration: BoxDecoration(
-                          color: AppColors.background,
-                          borderRadius:
-                              BorderRadius.circular(AppDimensions.radiusMedium),
-                          border: Border.all(color: AppColors.border),
-                        ),
-                        child: Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.inventory_2_outlined,
-                                size: 48,
-                                color: AppColors.textSecondary,
-                              ),
-                              const SizedBox(height: AppDimensions.spacingSmall),
-                              Text(
-                                '이 판매자의 다른 상품이 없습니다',
-                                style: AppTextStyles.body2.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
-                    )
-                  : ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: AppDimensions.paddingMedium,
-                      ),
-                      scrollDirection: Axis.horizontal,
-                      itemCount: _otherProducts.length,
-                      itemBuilder: (context, index) {
-                        final otherProduct = _otherProducts[index];
-
-                        return Container(
-                          margin: const EdgeInsets.only(
-                            right: AppDimensions.marginMedium,
-                          ),
-                          child: ProductCard(
-                            product: otherProduct,
-                            type: ProductCardType.grid,
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      ProductDetailScreen(productId: otherProduct.id),
-                                ),
-                              );
-                            },
-                            onFavorite: () {
-                              // Handle favorite toggle for other products
-                              final favoriteProvider = context.read<FavoriteProvider>();
-                              favoriteProvider.toggleFavorite(otherProduct.id, product: otherProduct);
-                            },
-                          ),
-                        );
-                      },
+                      border: Border.all(color: AppColors.border),
                     ),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.inventory_2_outlined,
+                            size: 48,
+                            color: AppColors.textSecondary,
+                          ),
+                          const SizedBox(height: AppDimensions.spacingSmall),
+                          Text(
+                            '이 판매자의 다른 상품이 없습니다',
+                            style: AppTextStyles.body2.copyWith(
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                )
+              : ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: AppDimensions.paddingMedium,
+                  ),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _otherProducts.length,
+                  itemBuilder: (context, index) {
+                    final otherProduct = _otherProducts[index];
+
+                    return Container(
+                      margin: const EdgeInsets.only(
+                        right: AppDimensions.marginMedium,
+                      ),
+                      child: ProductCard(
+                        product: otherProduct,
+                        type: ProductCardType.grid,
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (context) => ProductDetailScreen(
+                                productId: otherProduct.id,
+                              ),
+                            ),
+                          );
+                        },
+                        onFavorite: () {
+                          // Handle favorite toggle for other products
+                          final favoriteProvider = context
+                              .read<FavoriteProvider>();
+                          favoriteProvider.toggleFavorite(
+                            otherProduct.id,
+                            product: otherProduct,
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -695,7 +704,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 height: 48,
                 decoration: BoxDecoration(
                   border: Border.all(color: AppColors.border),
-                  borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                  borderRadius: BorderRadius.circular(
+                    AppDimensions.radiusSmall,
+                  ),
                 ),
                 child: _isFavoriteLoading
                     ? const Center(
@@ -707,7 +718,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                       )
                     : Icon(
                         isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: isFavorite ? AppColors.error : AppColors.textSecondary,
+                        color: isFavorite
+                            ? AppColors.error
+                            : AppColors.textSecondary,
                       ),
               ),
             );
@@ -722,13 +735,14 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (context) => const Center(
-                    child: CircularProgressIndicator(),
-                  ),
+                  builder: (context) =>
+                      const Center(child: CircularProgressIndicator()),
                 );
 
                 // 채팅방 생성 또는 조회
-                final chatRoom = await ChatService.getOrCreateChatRoom(widget.productId);
+                final chatRoom = await ChatService.getOrCreateChatRoom(
+                  widget.productId,
+                );
 
                 if (mounted) {
                   // 로딩 해제
@@ -737,9 +751,7 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                   // 채팅방으로 이동
                   Navigator.of(context).push(
                     MaterialPageRoute(
-                      builder: (context) => ChatRoomScreen(
-                        chatRoom: chatRoom,
-                      ),
+                      builder: (context) => ChatRoomScreen(chatRoom: chatRoom),
                     ),
                   );
                 }

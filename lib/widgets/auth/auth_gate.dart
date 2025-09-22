@@ -1,9 +1,12 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../main.dart';
 import '../../data/services/profile_service.dart';
+import '../../providers/favorite_provider.dart';
+import '../../providers/chat_notification_provider.dart';
 import '../screens/auth/login_screen.dart';
 import '../screens/splash/splash_screen.dart';
 import '../../navigation/main_navigation.dart';
@@ -76,9 +79,26 @@ class _AuthGateState extends State<AuthGate> {
         authState.session?.user != null) {
       // 로그인 성공시 프로필 확인 및 생성
       await _ensureUserProfile(authState.session!.user);
-    } else if (authState.event == AuthChangeEvent.signedOut) {
-      // 로그아웃시 UI 강제 업데이트
+
+      // Provider들 초기화
       if (mounted) {
+        final favoriteProvider = context.read<FavoriteProvider>();
+        final chatNotificationProvider = context
+            .read<ChatNotificationProvider>();
+
+        await favoriteProvider.loadFavorites();
+        await chatNotificationProvider.initialize();
+      }
+    } else if (authState.event == AuthChangeEvent.signedOut) {
+      // 로그아웃시 Provider들 정리
+      if (mounted) {
+        final favoriteProvider = context.read<FavoriteProvider>();
+        final chatNotificationProvider = context
+            .read<ChatNotificationProvider>();
+
+        favoriteProvider.clear();
+        chatNotificationProvider.clear();
+
         setState(() {
           // 로그아웃 상태로 UI 업데이트 트리거
         });
@@ -112,7 +132,22 @@ class _AuthGateState extends State<AuthGate> {
         log('Current session in build: ${currentSession?.user.email}');
 
         if (currentSession != null) {
-          // 로그인된 경우 메인 네비게이션으로
+          // 로그인된 경우 Provider 초기화 후 메인 네비게이션으로
+          WidgetsBinding.instance.addPostFrameCallback((_) async {
+            if (mounted) {
+              final favoriteProvider = context.read<FavoriteProvider>();
+              final chatNotificationProvider = context
+                  .read<ChatNotificationProvider>();
+
+              // Provider들이 아직 초기화되지 않았다면 초기화
+              if (favoriteProvider.favoriteCount == 0) {
+                await favoriteProvider.loadFavorites();
+              }
+
+              await chatNotificationProvider.initialize();
+            }
+          });
+
           return const MainNavigation();
         } else {
           // 로그인되지 않은 경우 로그인 화면으로

@@ -119,10 +119,7 @@ class FavoriteService {
         throw Exception('로그인이 필요합니다.');
       }
 
-      await _supabase
-          .from('favorites')
-          .delete()
-          .eq('user_id', user.id);
+      await _supabase.from('favorites').delete().eq('user_id', user.id);
 
       log('All favorites removed for user: ${user.id}');
     } catch (e) {
