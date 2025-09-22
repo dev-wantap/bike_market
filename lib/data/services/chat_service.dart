@@ -81,46 +81,27 @@ class ChatService {
         throw Exception('로그인이 필요합니다.');
       }
 
-      // 구매자인 채팅방
-      final buyerResponse = await _supabase
-          .from('chat_rooms')
-          .select('''
-            id, product_id, buyer_id, created_at,
-            buyer:profiles!chat_rooms_buyer_id_fkey(
-              id, nickname, profile_image_url, location
-            ),
-            products!inner(
-              id, title, price, description, image_urls, category, location,
-              status, view_count, created_at, updated_at, seller_id,
-              profiles!products_seller_id_fkey(
-                id, nickname, profile_image_url, location
-              )
-            )
-          ''')
-          .eq('buyer_id', user.id);
+      // 구매자인 채팅방 (마지막 메시지 포함)
+      final buyerResponse = await _supabase.rpc('get_chat_rooms_with_last_message',
+        params: {'user_id': user.id, 'as_buyer': true});
 
-      // 판매자인 채팅방
-      final sellerResponse = await _supabase
-          .from('chat_rooms')
-          .select('''
-            id, product_id, buyer_id, created_at,
-            buyer:profiles!chat_rooms_buyer_id_fkey(
-              id, nickname, profile_image_url, location
-            ),
-            products!inner(
-              id, title, price, description, image_urls, category, location,
-              status, view_count, created_at, updated_at, seller_id,
-              profiles!products_seller_id_fkey(
-                id, nickname, profile_image_url, location
-              )
-            )
-          ''')
-          .eq('products.seller_id', user.id);
+      // 판매자인 채팅방 (마지막 메시지 포함)
+      final sellerResponse = await _supabase.rpc('get_chat_rooms_with_last_message',
+        params: {'user_id': user.id, 'as_buyer': false});
 
       // 두 결과를 합치고 중복 제거
       final allRooms = <Map<String, dynamic>>[];
-      allRooms.addAll(buyerResponse as List<Map<String, dynamic>>);
-      allRooms.addAll(sellerResponse as List<Map<String, dynamic>>);
+
+      // RPC 함수 반환값을 Map으로 변환
+      final buyerRooms = (buyerResponse as List)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+      final sellerRooms = (sellerResponse as List)
+          .map((item) => item as Map<String, dynamic>)
+          .toList();
+
+      allRooms.addAll(buyerRooms);
+      allRooms.addAll(sellerRooms);
 
       // ID로 중복 제거
       final uniqueRooms = <int, Map<String, dynamic>>{};

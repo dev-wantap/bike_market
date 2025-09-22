@@ -166,6 +166,57 @@ class ProductService {
     }
   }
 
+  static Future<List<Product>> getProductsBySeller(
+    String sellerId, {
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _supabase
+          .from('products')
+          .select(
+            '*, profiles!products_seller_id_fkey(nickname, profile_image_url, location)',
+          )
+          .eq('status', 'selling')
+          .eq('seller_id', sellerId)
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return (response as List).map((json) => Product.fromJson(json)).toList();
+    } catch (e) {
+      log('Error fetching products by seller: $e');
+      return [];
+    }
+  }
+
+  static Future<List<Product>> getOtherProductsBySeller(
+    String sellerId,
+    String currentProductId, {
+    int limit = 4,
+  }) async {
+    try {
+      final currentId = int.tryParse(currentProductId);
+      if (currentId == null) {
+        throw Exception('유효하지 않은 상품 ID입니다.');
+      }
+
+      final response = await _supabase
+          .from('products')
+          .select(
+            '*, profiles!products_seller_id_fkey(nickname, profile_image_url, location)',
+          )
+          .eq('status', 'selling')
+          .eq('seller_id', sellerId)
+          .neq('id', currentId) // 현재 상품 제외
+          .order('created_at', ascending: false)
+          .limit(limit);
+
+      return (response as List).map((json) => Product.fromJson(json)).toList();
+    } catch (e) {
+      log('Error fetching other products by seller: $e');
+      return [];
+    }
+  }
+
   static Future<void> deleteProduct(String productId) async {
     final user = _supabase.auth.currentUser;
     if (user == null) {

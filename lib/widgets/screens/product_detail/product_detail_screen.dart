@@ -14,6 +14,7 @@ import '../../../providers/favorite_provider.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../chat/chat_room_screen.dart';
+import 'seller_products_screen.dart';
 import '../../../main.dart';
 
 class ProductDetailScreen extends StatefulWidget {
@@ -39,6 +40,8 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   String? _error;
   bool _isOwner = false;
   bool _isFavoriteLoading = false;
+  List<Product> _otherProducts = [];
+  bool _isLoadingOtherProducts = false;
 
   @override
   void initState() {
@@ -67,6 +70,9 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
 
       // 조회수 증가
       _incrementViewCount();
+
+      // 판매자의 다른 상품 로딩
+      _fetchOtherProducts();
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -84,6 +90,36 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       );
     } catch (e) {
       log('Failed to increment view count via RPC: $e');
+    }
+  }
+
+  Future<void> _fetchOtherProducts() async {
+    if (_product == null) return;
+
+    setState(() {
+      _isLoadingOtherProducts = true;
+    });
+
+    try {
+      final otherProducts = await ProductService.getOtherProductsBySeller(
+        _product!.seller.id,
+        widget.productId,
+        limit: 4,
+      );
+
+      if (mounted) {
+        setState(() {
+          _otherProducts = otherProducts;
+          _isLoadingOtherProducts = false;
+        });
+      }
+    } catch (e) {
+      log('Error fetching other products: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingOtherProducts = false;
+        });
+      }
     }
   }
 
@@ -477,7 +513,13 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
               ),
               OutlinedButton(
                 onPressed: () {
-                  // Handle view other products
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SellerProductsScreen(
+                        seller: _product!.seller,
+                      ),
+                    ),
+                  );
                 },
                 child: const Text('다른 판매상품 보기'),
               ),
@@ -496,46 +538,104 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.paddingMedium,
           ),
-          child: Text('이 판매자의 다른 상품', style: AppTextStyles.headline3),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('이 판매자의 다른 상품', style: AppTextStyles.headline3),
+              if (_otherProducts.length > 3)
+                GestureDetector(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => SellerProductsScreen(
+                          seller: _product!.seller,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    '더보기',
+                    style: AppTextStyles.body2.copyWith(
+                      color: AppColors.primary,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
         const SizedBox(height: AppDimensions.spacingMedium),
         SizedBox(
           height: AppDimensions.productCardHeight + 20,
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(
-              horizontal: AppDimensions.paddingMedium,
-            ),
-            scrollDirection: Axis.horizontal,
-            itemCount: 3, // Show 3 other products
-            itemBuilder: (context, index) {
-              // For demo, we'll use the same product with modified titles
-              final otherProduct = _product!.copyWith(
-                id: 'other_$index',
-                title: '${_product!.seller.nickname}의 다른 자전거 ${index + 1}',
-              );
-
-              return Container(
-                margin: const EdgeInsets.only(
-                  right: AppDimensions.marginMedium,
-                ),
-                child: ProductCard(
-                  product: otherProduct,
-                  type: ProductCardType.grid,
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            ProductDetailScreen(productId: otherProduct.id),
+          child: _isLoadingOtherProducts
+              ? const Center(child: CircularProgressIndicator())
+              : _otherProducts.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.paddingMedium,
                       ),
-                    );
-                  },
-                  onFavorite: () {
-                    // Handle favorite toggle
-                  },
-                ),
-              );
-            },
-          ),
+                      child: Container(
+                        height: AppDimensions.productCardHeight,
+                        decoration: BoxDecoration(
+                          color: AppColors.background,
+                          borderRadius:
+                              BorderRadius.circular(AppDimensions.radiusMedium),
+                          border: Border.all(color: AppColors.border),
+                        ),
+                        child: Center(
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.inventory_2_outlined,
+                                size: 48,
+                                color: AppColors.textSecondary,
+                              ),
+                              const SizedBox(height: AppDimensions.spacingSmall),
+                              Text(
+                                '이 판매자의 다른 상품이 없습니다',
+                                style: AppTextStyles.body2.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: AppDimensions.paddingMedium,
+                      ),
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _otherProducts.length,
+                      itemBuilder: (context, index) {
+                        final otherProduct = _otherProducts[index];
+
+                        return Container(
+                          margin: const EdgeInsets.only(
+                            right: AppDimensions.marginMedium,
+                          ),
+                          child: ProductCard(
+                            product: otherProduct,
+                            type: ProductCardType.grid,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailScreen(productId: otherProduct.id),
+                                ),
+                              );
+                            },
+                            onFavorite: () {
+                              // Handle favorite toggle for other products
+                              final favoriteProvider = context.read<FavoriteProvider>();
+                              favoriteProvider.toggleFavorite(otherProduct.id, product: otherProduct);
+                            },
+                          ),
+                        );
+                      },
+                    ),
         ),
       ],
     );

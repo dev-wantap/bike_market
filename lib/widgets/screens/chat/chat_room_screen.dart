@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
@@ -210,14 +211,41 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
             width: 60,
             height: 60,
             decoration: BoxDecoration(
-              color: AppColors.border,
               borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
             ),
-            child: const Icon(
-              Icons.pedal_bike,
-              color: AppColors.primary,
-              size: 24,
-            ),
+            clipBehavior: Clip.hardEdge,
+            child: widget.chatRoom.product.images.isNotEmpty
+                ? CachedNetworkImage(
+                    imageUrl: widget.chatRoom.product.images.first,
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    placeholder: (context, url) => Container(
+                      color: AppColors.border,
+                      child: const Center(
+                        child: CircularProgressIndicator(
+                          color: AppColors.primary,
+                          strokeWidth: 2,
+                        ),
+                      ),
+                    ),
+                    errorWidget: (context, url, error) => Container(
+                      color: AppColors.border,
+                      child: const Icon(
+                        Icons.pedal_bike,
+                        color: AppColors.primary,
+                        size: 24,
+                      ),
+                    ),
+                  )
+                : Container(
+                    color: AppColors.border,
+                    child: const Icon(
+                      Icons.pedal_bike,
+                      color: AppColors.primary,
+                      size: 24,
+                    ),
+                  ),
           ),
           const SizedBox(width: AppDimensions.spacingMedium),
           Expanded(

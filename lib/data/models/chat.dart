@@ -9,6 +9,9 @@ class ChatRoom {
   final List<Message> messages;
   final int unreadCount;
   final DateTime createdAt;
+  final String? lastMessageContent;
+  final DateTime? lastMessageTimestamp;
+  final String? lastMessageSenderId;
 
   const ChatRoom({
     required this.id,
@@ -17,6 +20,9 @@ class ChatRoom {
     required this.messages,
     required this.unreadCount,
     required this.createdAt,
+    this.lastMessageContent,
+    this.lastMessageTimestamp,
+    this.lastMessageSenderId,
   });
 
   factory ChatRoom.fromJson(Map<String, dynamic> json, [String? currentUserId]) {
@@ -41,6 +47,11 @@ class ChatRoom {
       );
     }
 
+    // 마지막 메시지 정보 파싱
+    final lastMessageContent = json['last_message_content'] as String?;
+    final lastMessageTimeStr = json['last_message_created_at'] as String?;
+    final lastMessageSenderId = json['last_message_sender_id'] as String?;
+
     return ChatRoom(
       id: json['id'] as int,
       product: product,
@@ -48,6 +59,9 @@ class ChatRoom {
       messages: [], // 메시지는 별도로 로드
       unreadCount: 0, // 별도로 계산
       createdAt: DateTime.parse(json['created_at']),
+      lastMessageContent: lastMessageContent,
+      lastMessageTimestamp: lastMessageTimeStr != null ? DateTime.parse(lastMessageTimeStr) : null,
+      lastMessageSenderId: lastMessageSenderId,
     );
   }
 
@@ -58,6 +72,9 @@ class ChatRoom {
     List<Message>? messages,
     int? unreadCount,
     DateTime? createdAt,
+    String? lastMessageContent,
+    DateTime? lastMessageTimestamp,
+    String? lastMessageSenderId,
   }) {
     return ChatRoom(
       id: id ?? this.id,
@@ -66,17 +83,30 @@ class ChatRoom {
       messages: messages ?? this.messages,
       unreadCount: unreadCount ?? this.unreadCount,
       createdAt: createdAt ?? this.createdAt,
+      lastMessageContent: lastMessageContent ?? this.lastMessageContent,
+      lastMessageTimestamp: lastMessageTimestamp ?? this.lastMessageTimestamp,
+      lastMessageSenderId: lastMessageSenderId ?? this.lastMessageSenderId,
     );
   }
 
   String get lastMessage {
-    if (messages.isEmpty) return '대화를 시작해보세요!';
-    return messages.last.content;
+    if (lastMessageContent != null && lastMessageContent!.isNotEmpty) {
+      return lastMessageContent!;
+    }
+    if (messages.isNotEmpty) {
+      return messages.last.content;
+    }
+    return '대화를 시작해보세요!';
   }
 
   DateTime get lastMessageTime {
-    if (messages.isEmpty) return createdAt;
-    return messages.last.timestamp;
+    if (lastMessageTimestamp != null) {
+      return lastMessageTimestamp!;
+    }
+    if (messages.isNotEmpty) {
+      return messages.last.timestamp;
+    }
+    return createdAt;
   }
 }
 
