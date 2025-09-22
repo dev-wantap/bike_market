@@ -1,6 +1,7 @@
 import 'dart:developer';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -9,11 +10,13 @@ import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/models/product.dart';
+import '../../../data/services/product_service.dart';
 
 class AddProductScreen extends StatefulWidget {
   final VoidCallback? onProductAdded;
+  final Product? productToEdit;
 
-  const AddProductScreen({super.key, this.onProductAdded});
+  const AddProductScreen({super.key, this.onProductAdded, this.productToEdit});
 
   @override
   State<AddProductScreen> createState() => _AddProductScreenState();
@@ -34,6 +37,10 @@ class _AddProductScreenState extends State<AddProductScreen> {
   final ImagePicker _imagePicker = ImagePicker();
   bool _isUploading = false;
 
+  // 수정 모드용
+  bool get isEditMode => widget.productToEdit != null;
+  List<String> _initialImageUrls = [];
+
   final List<String> _categories = [
     '로드바이크',
     '산악자전거',
@@ -48,6 +55,40 @@ class _AddProductScreenState extends State<AddProductScreen> {
   ];
 
   final List<String> _conditions = ['새상품', '좋음', '보통', '나쁨'];
+
+  @override
+  void initState() {
+    super.initState();
+    if (isEditMode) {
+      _initializeEditData();
+    }
+  }
+
+  void _initializeEditData() {
+    final product = widget.productToEdit!;
+    _titleController.text = product.title;
+    _descriptionController.text = product.description;
+    _priceController.text =
+        _ThousandsSeparatorInputFormatter()._addCommas(product.price.toString());
+    _locationController.text = product.location;
+
+    // 카테고리 ID를 이름으로 변환
+    final categoryMap = {
+      'road': '로드바이크',
+      'mtb': '산악자전거',
+      'hybrid': '하이브리드',
+      'folding': '접이식자전거',
+      'electric': '전기자전거',
+      'city': '미니벨로',
+    };
+    _selectedCategory = categoryMap[product.category] ?? '기타';
+
+    // TODO: 상품 상태, 가격 제안 여부도 DB에 추가하고 초기화해야 함
+    // _selectedCondition = product.condition;
+    // _isNegotiable = product.isNegotiable;
+
+    _initialImageUrls = product.images;
+  }
 
   @override
   void dispose() {
@@ -157,21 +198,23 @@ class _AddProductScreenState extends State<AddProductScreen> {
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
-        title: const Text('상품 등록'),
+        title: Text(isEditMode ? '상품 수정' : '상품 등록'),
         backgroundColor: AppColors.surface,
         elevation: 0,
         actions: [
           TextButton(
-            onPressed: _isUploading ? null : _submitProduct,
+            onPressed: _isUploading
+                ? null
+                : (isEditMode ? _updateProduct : _submitProduct),
             child: _isUploading
                 ? const SizedBox(
                     width: 16,
                     height: 16,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text(
-                    '완료',
-                    style: TextStyle(
+                : Text(
+                    isEditMode ? '수정 완료' : '완료',
+                    style: const TextStyle(
                       color: AppColors.primary,
                       fontWeight: FontWeight.bold,
                     ),
@@ -217,32 +260,36 @@ class _AddProductScreenState extends State<AddProductScreen> {
             Row(
               children: [
                 Text('상품 사진', style: AppTextStyles.subtitle1),
-                const SizedBox(width: AppDimensions.spacingSmall),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppDimensions.paddingSmall,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppColors.error,
-                    borderRadius: BorderRadius.circular(
-                      AppDimensions.radiusSmall,
+                if (!isEditMode) ...[
+                  const SizedBox(width: AppDimensions.spacingSmall),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: AppDimensions.paddingSmall,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppColors.error,
+                      borderRadius: BorderRadius.circular(
+                        AppDimensions.radiusSmall,
+                      ),
+                    ),
+                    child: const Text(
+                      '필수',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
-                  child: const Text(
-                    '필수',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+                ]
               ],
             ),
             const SizedBox(height: AppDimensions.spacingSmall),
             Text(
-              '상품 사진을 등록해주세요 (최대 5장)',
+              isEditMode
+                  ? '이미지 수정은 다음 단계에서 지원될 예정입니다.'
+                  : '상품 사진을 등록해주세요 (최대 5장)',
               style: AppTextStyles.caption.copyWith(
                 color: AppColors.textSecondary,
               ),
@@ -252,7 +299,7 @@ class _AddProductScreenState extends State<AddProductScreen> {
               height: 100,
               child: ListView.builder(
                 scrollDirection: Axis.horizontal,
-                itemCount: 5,
+                itemCount: isEditMode ? _initialImageUrls.length : 5,
                 itemBuilder: (context, index) {
                   return Container(
                     width: 100,
@@ -271,8 +318,24 @@ class _AddProductScreenState extends State<AddProductScreen> {
   }
 
   Widget _buildImageSlot(int index) {
-    final hasImage = index < _selectedImages.length;
+    if (isEditMode) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+        child: CachedNetworkImage(
+          imageUrl: _initialImageUrls[index],
+          width: double.infinity,
+          height: double.infinity,
+          fit: BoxFit.cover,
+          placeholder: (context, url) => Container(
+            color: AppColors.border,
+          ),
+          errorWidget: (context, url, error) => const Icon(Icons.error),
+        ),
+      );
+    }
 
+    // --- 등록 모드 ---
+    final hasImage = index < _selectedImages.length;
     return GestureDetector(
       onTap: hasImage ? () => _removeImage(index) : _pickImage,
       child: Container(
@@ -757,6 +820,78 @@ class _AddProductScreenState extends State<AddProductScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('상품 등록 중 오류가 발생했습니다: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      log('로딩 종료: _isUploading = false');
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _updateProduct() async {
+    log('=== _updateProduct 시작 ===');
+
+    if (!_formKey.currentState!.validate()) {
+      log('폼 검증 실패');
+      return;
+    }
+
+    log('로딩 시작: _isUploading = true');
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      // 카테고리 매핑
+      final categoryMap = {
+        '로드바이크': 'road',
+        '산악자전거': 'mtb',
+        '하이브리드': 'hybrid',
+        '접이식자전거': 'folding',
+        '전기자전거': 'electric',
+        '미니벨로': 'city',
+        '픽시': 'road',
+        '커스텀': 'road',
+        '부품': 'road',
+        '기타': 'road',
+      };
+
+      final updatedProduct = widget.productToEdit!.copyWith(
+        title: _titleController.text.trim(),
+        price: int.parse(_priceController.text.replaceAll(',', '')),
+        description: _descriptionController.text.trim(),
+        category: categoryMap[_selectedCategory] ?? 'road',
+        location: _locationController.text.trim(),
+        // images는 Phase 1에서 수정하지 않음
+      );
+
+      log('상품 DB 업데이트 시작');
+      await ProductService.updateProduct(updatedProduct);
+      log('상품 DB 업데이트 완료');
+
+      if (mounted) {
+        log('상품 수정 성공 - 화면 이동');
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('상품 정보가 수정되었습니다'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+        // 상세 화면으로 돌아가서 리프레시 될 수 있도록 데이터 전달
+        Navigator.of(context).pop(true);
+      }
+    } catch (e) {
+      log('상품 수정 에러: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('상품 수정 중 오류가 발생했습니다: $e'),
             backgroundColor: AppColors.error,
           ),
         );

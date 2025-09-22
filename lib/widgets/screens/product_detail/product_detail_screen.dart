@@ -1,5 +1,6 @@
 import 'dart:developer';
 
+import 'package:bike_market/widgets/screens/add/add_product_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
@@ -855,14 +856,22 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
     }
   }
 
-  void _editProduct() {
-    // TODO: Navigate to AddProductScreen with edit mode
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('상품 수정 기능은 개발 중입니다'),
-        backgroundColor: AppColors.info,
+  void _editProduct() async {
+    if (_product == null) return;
+
+    final result = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(
+        builder: (context) => AddProductScreen(productToEdit: _product!),
       ),
     );
+
+    // 수정이 완료되면 true가 리턴됨
+    if (result == true) {
+      // 데이터 새로고침
+      _fetchProductDetails();
+      // 홈 화면 등 이전 화면에도 변경사항이 반영되도록 콜백 호출
+      widget.onProductDeleted?.call(); 
+    }
   }
 
   void _deleteProduct() {
