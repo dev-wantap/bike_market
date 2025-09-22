@@ -6,6 +6,8 @@ import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
 import '../../../data/models/profile.dart';
 import '../../../data/services/profile_service.dart';
+import '../../../data/services/product_service.dart';
+import '../../../data/services/favorite_service.dart';
 import '../../../main.dart';
 import 'my_products_screen.dart';
 import 'favorites_screen.dart';
@@ -22,29 +24,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final ProfileService _profileService = ProfileService();
   Profile? _userProfile;
   bool _isLoading = true;
+  int _sellingProductsCount = 0;
+  int _favoriteProductsCount = 0;
 
   @override
   void initState() {
     super.initState();
-    _loadUserProfile();
+    _loadData();
   }
 
-  Future<void> _loadUserProfile() async {
+  Future<void> _loadData() async {
     try {
-      final profile = await _profileService.getCurrentUserProfile();
+      // 프로필 정보와 통계 정보를 병렬로 로드
+      final futures = await Future.wait([
+        _profileService.getCurrentUserProfile(),
+        _loadSellingProductsCount(),
+        _loadFavoriteProductsCount(),
+      ]);
+
       if (mounted) {
         setState(() {
-          _userProfile = profile;
+          _userProfile = futures[0] as Profile?;
           _isLoading = false;
         });
       }
     } catch (e) {
-      log('Error loading profile: $e');
+      log('Error loading data: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;
         });
       }
+    }
+  }
+
+  Future<int> _loadSellingProductsCount() async {
+    try {
+      final products = await ProductService.getProductsByCurrentUser();
+      final count = products.length;
+      if (mounted) {
+        setState(() {
+          _sellingProductsCount = count;
+        });
+      }
+      return count;
+    } catch (e) {
+      log('Error loading selling products count: $e');
+      return 0;
+    }
+  }
+
+  Future<int> _loadFavoriteProductsCount() async {
+    try {
+      final count = await FavoriteService.getFavoriteCount();
+      if (mounted) {
+        setState(() {
+          _favoriteProductsCount = count;
+        });
+      }
+      return count;
+    } catch (e) {
+      log('Error loading favorite products count: $e');
+      return 0;
     }
   }
 
@@ -267,11 +308,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildStatItem('판매상품', '5'),
+          _buildStatItem('판매상품', _sellingProductsCount.toString()),
           _buildStatDivider(),
-          _buildStatItem('구매상품', '12'),
+          _buildStatItem('구매상품', '12'), // 하드코딩 유지
           _buildStatDivider(),
-          _buildStatItem('찜한상품', '8'),
+          _buildStatItem('찜한상품', _favoriteProductsCount.toString()),
         ],
       ),
     );
@@ -528,7 +569,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
 
       // 프로필 다시 로드
-      await _loadUserProfile();
+      await _loadData();
 
       if (context.mounted) {
         Navigator.pop(context);

@@ -2,17 +2,19 @@ import 'dart:developer';
 
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../core/utils/feedback_helper.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/product_service.dart';
-import '../../../data/services/favorite_service.dart';
+import '../../../data/services/chat_service.dart';
+import '../../../providers/favorite_provider.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../chat/chat_room_screen.dart';
 import '../../../main.dart';
-import '../../../navigation/main_navigation.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
@@ -31,12 +33,12 @@ class ProductDetailScreen extends StatefulWidget {
 class _ProductDetailScreenState extends State<ProductDetailScreen> {
   final PageController _imagePageController = PageController();
   int _currentImageIndex = 0;
-  bool _isFavorite = false;
   bool _isDescriptionExpanded = false;
   Product? _product;
   bool _isLoading = true;
   String? _error;
   bool _isOwner = false;
+  bool _isFavoriteLoading = false;
 
   @override
   void initState() {
@@ -53,12 +55,12 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
       final isOwner =
           currentUser != null && currentUser.id == product.seller.id;
 
-      // 찜 상태 확인
-      final isFavorite = await FavoriteService.isFavorite(widget.productId);
+      // 찜 상태는 Provider에서 확인
+      final favoriteProvider = context.read<FavoriteProvider>();
+      final isFavorite = favoriteProvider.isFavorite(widget.productId);
 
       setState(() {
         _product = product.copyWith(isFavorite: isFavorite);
-        _isFavorite = isFavorite;
         _isOwner = isOwner;
         _isLoading = false;
       });
@@ -86,25 +88,33 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   }
 
   Future<void> _toggleFavorite() async {
-    try {
-      if (_isFavorite) {
-        await FavoriteService.removeFavorite(widget.productId);
-      } else {
-        await FavoriteService.addFavorite(widget.productId);
-      }
+    if (_isFavoriteLoading) return;
 
+    setState(() {
+      _isFavoriteLoading = true;
+    });
+
+    final favoriteProvider = context.read<FavoriteProvider>();
+    final success = await favoriteProvider.toggleFavorite(widget.productId, product: _product);
+
+    if (mounted) {
       setState(() {
-        _isFavorite = !_isFavorite;
-        _product = _product?.copyWith(isFavorite: _isFavorite);
+        _isFavoriteLoading = false;
+        if (_product != null) {
+          _product = _product!.copyWith(isFavorite: favoriteProvider.isFavorite(widget.productId));
+        }
       });
-    } catch (e) {
-      log('Error toggling favorite: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_isFavorite ? '찜 해제에 실패했습니다.' : '찜하기에 실패했습니다.'),
-            backgroundColor: AppColors.error,
-          ),
+
+      if (success) {
+        if (favoriteProvider.isFavorite(widget.productId)) {
+          FeedbackHelper.showFavoriteAdded(context);
+        } else {
+          FeedbackHelper.showFavoriteRemoved(context);
+        }
+      } else {
+        FeedbackHelper.showFavoriteError(
+          context,
+          favoriteProvider.isFavorite(widget.productId) ? '찜 해제' : '찜하기',
         );
       }
     }
@@ -575,33 +585,78 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
   Widget _buildBuyerActions() {
     return Row(
       children: [
-        GestureDetector(
-          onTap: _toggleFavorite,
-          child: Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.border),
-              borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
-            ),
-            child: Icon(
-              _isFavorite ? Icons.favorite : Icons.favorite_border,
-              color: _isFavorite ? AppColors.error : AppColors.textSecondary,
-            ),
-          ),
+        Consumer<FavoriteProvider>(
+          builder: (context, favoriteProvider, child) {
+            final isFavorite = favoriteProvider.isFavorite(widget.productId);
+            return GestureDetector(
+              onTap: _isFavoriteLoading ? null : _toggleFavorite,
+              child: Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  border: Border.all(color: AppColors.border),
+                  borderRadius: BorderRadius.circular(AppDimensions.radiusSmall),
+                ),
+                child: _isFavoriteLoading
+                    ? const Center(
+                        child: SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      )
+                    : Icon(
+                        isFavorite ? Icons.favorite : Icons.favorite_border,
+                        color: isFavorite ? AppColors.error : AppColors.textSecondary,
+                      ),
+              ),
+            );
+          },
         ),
         const SizedBox(width: AppDimensions.spacingMedium),
         Expanded(
           child: ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ChatRoomScreen(
-                    product: _product!,
-                    otherUser: _product!.seller,
+            onPressed: () async {
+              try {
+                // 로딩 표시
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) => const Center(
+                    child: CircularProgressIndicator(),
                   ),
-                ),
-              );
+                );
+
+                // 채팅방 생성 또는 조회
+                final chatRoom = await ChatService.getOrCreateChatRoom(widget.productId);
+
+                if (mounted) {
+                  // 로딩 해제
+                  Navigator.of(context).pop();
+
+                  // 채팅방으로 이동
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => ChatRoomScreen(
+                        chatRoom: chatRoom,
+                      ),
+                    ),
+                  );
+                }
+              } catch (e) {
+                if (mounted) {
+                  // 로딩 해제
+                  Navigator.of(context).pop();
+
+                  // 에러 표시
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('채팅방을 열 수 없습니다: ${e.toString()}'),
+                      backgroundColor: AppColors.error,
+                    ),
+                  );
+                }
+              }
             },
             child: const Text('채팅하기'),
           ),

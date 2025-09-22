@@ -1,17 +1,73 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
-import '../../../data/dummy_data.dart';
 import '../../../data/models/chat.dart';
+import '../../../data/services/chat_service.dart';
 import 'chat_room_screen.dart';
 
-class ChatListScreen extends StatelessWidget {
+class ChatListScreen extends StatefulWidget {
   const ChatListScreen({super.key});
 
   @override
+  State<ChatListScreen> createState() => _ChatListScreenState();
+}
+
+class _ChatListScreenState extends State<ChatListScreen> {
+  List<ChatRoom> _chatRooms = [];
+  Map<int, int> _unreadCounts = {};
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchChatRooms();
+  }
+
+  Future<void> _fetchChatRooms() async {
+    try {
+      final chatRooms = await ChatService.getChatRooms();
+
+      // 각 채팅방의 읽지 않은 메시지 개수 조회
+      final unreadCounts = <int, int>{};
+      for (final chatRoom in chatRooms) {
+        final count = await ChatService.getUnreadMessageCount(chatRoom.id);
+        unreadCounts[chatRoom.id] = count;
+      }
+
+      if (mounted) {
+        setState(() {
+          _chatRooms = chatRooms;
+          _unreadCounts = unreadCounts;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      log('Error fetching chat rooms: $e');
+      if (mounted) {
+        setState(() {
+          _chatRooms = [];
+          _unreadCounts = {};
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final chatRooms = DummyData.chatRooms;
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text('채팅'),
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          centerTitle: false,
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -20,15 +76,18 @@ class ChatListScreen extends StatelessWidget {
         elevation: 0,
         centerTitle: false,
       ),
-      body: chatRooms.isEmpty
-          ? _buildEmptyState()
-          : ListView.builder(
-              itemCount: chatRooms.length,
-              itemBuilder: (context, index) {
-                final chatRoom = chatRooms[index];
-                return _buildChatTile(context, chatRoom);
-              },
-            ),
+      body: RefreshIndicator(
+        onRefresh: _fetchChatRooms,
+        child: _chatRooms.isEmpty
+            ? _buildEmptyState()
+            : ListView.builder(
+                itemCount: _chatRooms.length,
+                itemBuilder: (context, index) {
+                  final chatRoom = _chatRooms[index];
+                  return _buildChatTile(context, chatRoom);
+                },
+              ),
+      ),
     );
   }
 
@@ -116,7 +175,7 @@ class ChatListScreen extends StatelessWidget {
               style: AppTextStyles.subtitle1,
             ),
           ),
-          if (chatRoom.unreadCount > 0)
+          if ((_unreadCounts[chatRoom.id] ?? 0) > 0)
             Container(
               padding: const EdgeInsets.symmetric(
                 horizontal: AppDimensions.paddingSmall,
@@ -129,7 +188,7 @@ class ChatListScreen extends StatelessWidget {
               constraints: const BoxConstraints(minWidth: 20, minHeight: 20),
               child: Center(
                 child: Text(
-                  '${chatRoom.unreadCount}',
+                  '${_unreadCounts[chatRoom.id] ?? 0}',
                   style: const TextStyle(
                     color: Colors.white,
                     fontSize: 12,
@@ -160,10 +219,10 @@ class ChatListScreen extends StatelessWidget {
                 child: Text(
                   chatRoom.lastMessage,
                   style: AppTextStyles.body2.copyWith(
-                    color: chatRoom.unreadCount > 0
+                    color: (_unreadCounts[chatRoom.id] ?? 0) > 0
                         ? AppColors.textPrimary
                         : AppColors.textSecondary,
-                    fontWeight: chatRoom.unreadCount > 0
+                    fontWeight: (_unreadCounts[chatRoom.id] ?? 0) > 0
                         ? FontWeight.w500
                         : FontWeight.normal,
                   ),
@@ -185,11 +244,13 @@ class ChatListScreen extends StatelessWidget {
         Navigator.of(context).push(
           MaterialPageRoute(
             builder: (context) => ChatRoomScreen(
-              product: chatRoom.product,
-              otherUser: chatRoom.otherUser,
+              chatRoom: chatRoom,
             ),
           ),
-        );
+        ).then((_) {
+          // 채팅방에서 돌아왔을 때 목록 새로고침
+          _fetchChatRooms();
+        });
       },
     );
   }

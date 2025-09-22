@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
+import '../../providers/favorite_provider.dart';
 import '../../core/constants/colors.dart';
 import '../../core/constants/dimensions.dart';
 import '../../core/constants/text_styles.dart';
@@ -12,6 +14,7 @@ class ProductCard extends StatelessWidget {
   final ProductCardType type;
   final VoidCallback? onTap;
   final VoidCallback? onFavorite;
+  final bool isFavoriteLoading;
   final Widget? trailing;
 
   const ProductCard({
@@ -20,6 +23,7 @@ class ProductCard extends StatelessWidget {
     this.type = ProductCardType.grid,
     this.onTap,
     this.onFavorite,
+    this.isFavoriteLoading = false,
     this.trailing,
   });
 
@@ -152,17 +156,28 @@ class ProductCard extends StatelessWidget {
                           if (trailing != null)
                             trailing!
                           else
-                            GestureDetector(
-                              onTap: onFavorite,
-                              child: Icon(
-                                product.isFavorite
-                                    ? Icons.favorite
-                                    : Icons.favorite_border,
-                                color: product.isFavorite
-                                    ? AppColors.error
-                                    : AppColors.textSecondary,
-                                size: AppDimensions.iconSmall,
-                              ),
+                            Consumer<FavoriteProvider>(
+                              builder: (context, favoriteProvider, child) {
+                                final isFavorite = favoriteProvider.isFavorite(product.id);
+                                return GestureDetector(
+                                  onTap: onFavorite,
+                                  child: isFavoriteLoading
+                                      ? const SizedBox(
+                                          width: 20,
+                                          height: 20,
+                                          child: CircularProgressIndicator(strokeWidth: 2),
+                                        )
+                                      : Icon(
+                                          isFavorite
+                                              ? Icons.favorite
+                                              : Icons.favorite_border,
+                                          color: isFavorite
+                                              ? AppColors.error
+                                              : AppColors.textSecondary,
+                                          size: AppDimensions.iconSmall,
+                                        ),
+                                );
+                              },
                             ),
                         ],
                       ),
@@ -219,29 +234,42 @@ class ProductCard extends StatelessWidget {
           Positioned(
             top: AppDimensions.paddingSmall,
             right: AppDimensions.paddingSmall,
-            child: GestureDetector(
-              onTap: onFavorite,
-              child: Container(
-                padding: const EdgeInsets.all(AppDimensions.paddingXSmall),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 4,
-                      offset: Offset(0, 2),
+            child: Consumer<FavoriteProvider>(
+              builder: (context, favoriteProvider, child) {
+                final isFavorite = favoriteProvider.isFavorite(product.id);
+                return GestureDetector(
+                  onTap: onFavorite,
+                  child: Container(
+                    padding: const EdgeInsets.all(AppDimensions.paddingXSmall),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 4,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Icon(
-                  product.isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: product.isFavorite
-                      ? AppColors.error
-                      : AppColors.textSecondary,
-                  size: AppDimensions.iconSmall,
-                ),
-              ),
+                    child: isFavoriteLoading
+                      ? const Center(
+                          child: SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                        )
+                      : Icon(
+                          isFavorite ? Icons.favorite : Icons.favorite_border,
+                          color: isFavorite
+                              ? AppColors.error
+                              : AppColors.textSecondary,
+                          size: AppDimensions.iconSmall,
+                        ),
+                  ),
+                );
+              },
             ),
           ),
         ],

@@ -1,13 +1,15 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
+import 'package:provider/provider.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
+import '../../../core/utils/feedback_helper.dart';
 import '../../../data/dummy_data.dart';
 import '../../../data/models/product.dart';
 import '../../../data/services/product_service.dart';
-import '../../../data/services/favorite_service.dart';
+import '../../../providers/favorite_provider.dart';
 import '../../common/custom_app_bar.dart';
 import '../../common/product_card.dart';
 import '../../common/category_item.dart';
@@ -32,11 +34,16 @@ class _HomeScreenState extends State<HomeScreen> {
   List<Product> _recentProducts = [];
   bool _isLoadingPopular = true;
   bool _isLoadingRecent = true;
+  final Set<String> _isTogglingFavorite = {};
 
   @override
   void initState() {
     super.initState();
     _fetchData();
+    // FavoriteProvider 초기화
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<FavoriteProvider>().loadFavorites();
+    });
   }
 
   void refreshData() {
@@ -53,8 +60,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final recent = await recentFuture;
 
       // 찜 상태 업데이트
-      final updatedPopular = await _updateFavoriteStatus(popular);
-      final updatedRecent = await _updateFavoriteStatus(recent);
+      final favoriteProvider = context.read<FavoriteProvider>();
+      final updatedPopular = _updateFavoriteStatus(popular, favoriteProvider);
+      final updatedRecent = _updateFavoriteStatus(recent, favoriteProvider);
 
       if (mounted) {
         setState(() {
@@ -95,8 +103,9 @@ class _HomeScreenState extends State<HomeScreen> {
       final recent = await recentFuture;
 
       // 찜 상태 업데이트
-      final updatedPopular = await _updateFavoriteStatus(popular);
-      final updatedRecent = await _updateFavoriteStatus(recent);
+      final favoriteProvider = context.read<FavoriteProvider>();
+      final updatedPopular = _updateFavoriteStatus(popular, favoriteProvider);
+      final updatedRecent = _updateFavoriteStatus(recent, favoriteProvider);
 
       if (mounted) {
         setState(() {
@@ -118,51 +127,41 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<List<Product>> _updateFavoriteStatus(List<Product> products) async {
-    final updatedProducts = <Product>[];
-    for (final product in products) {
-      final isFavorite = await FavoriteService.isFavorite(product.id);
-      updatedProducts.add(product.copyWith(isFavorite: isFavorite));
-    }
-    return updatedProducts;
+  List<Product> _updateFavoriteStatus(List<Product> products, FavoriteProvider favoriteProvider) {
+    return products.map((product) {
+      final isFavorite = favoriteProvider.isFavorite(product.id);
+      return product.copyWith(isFavorite: isFavorite);
+    }).toList();
   }
 
   Future<void> _toggleFavorite(Product product) async {
-    try {
-      if (product.isFavorite) {
-        await FavoriteService.removeFavorite(product.id);
+    if (_isTogglingFavorite.contains(product.id)) return;
+
+    setState(() {
+      _isTogglingFavorite.add(product.id);
+    });
+
+    final favoriteProvider = context.read<FavoriteProvider>();
+
+    final success = await favoriteProvider.toggleFavorite(product.id, product: product);
+
+    if (mounted) {
+      if (success) {
+        if (favoriteProvider.isFavorite(product.id)) {
+          FeedbackHelper.showFavoriteAdded(context);
+        } else {
+          FeedbackHelper.showFavoriteRemoved(context);
+        }
       } else {
-        await FavoriteService.addFavorite(product.id);
-      }
-
-      // 상태 업데이트
-      setState(() {
-        // 인기 상품 목록에서 해당 상품 찾아서 업데이트
-        final popularIndex = _popularProducts.indexWhere((p) => p.id == product.id);
-        if (popularIndex != -1) {
-          _popularProducts[popularIndex] = _popularProducts[popularIndex].copyWith(
-            isFavorite: !product.isFavorite,
-          );
-        }
-
-        // 최신 상품 목록에서 해당 상품 찾아서 업데이트
-        final recentIndex = _recentProducts.indexWhere((p) => p.id == product.id);
-        if (recentIndex != -1) {
-          _recentProducts[recentIndex] = _recentProducts[recentIndex].copyWith(
-            isFavorite: !product.isFavorite,
-          );
-        }
-      });
-    } catch (e) {
-      log('Error toggling favorite: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(product.isFavorite ? '찜 해제에 실패했습니다.' : '찜하기에 실패했습니다.'),
-            backgroundColor: AppColors.error,
-          ),
+        FeedbackHelper.showFavoriteError(
+          context,
+          favoriteProvider.isFavorite(product.id) ? '찜 해제' : '찜하기',
         );
       }
+
+      setState(() {
+        _isTogglingFavorite.remove(product.id);
+      });
     }
   }
 
@@ -356,6 +355,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: ProductCard(
                         product: product,
                         type: ProductCardType.grid,
+                        isFavoriteLoading: _isTogglingFavorite.contains(product.id),
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -412,6 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   return ProductCard(
                     product: product,
                     type: ProductCardType.list,
+                    isFavoriteLoading: _isTogglingFavorite.contains(product.id),
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(

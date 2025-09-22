@@ -1,19 +1,19 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/constants/colors.dart';
 import '../../../core/constants/dimensions.dart';
 import '../../../core/constants/text_styles.dart';
-import '../../../data/models/product.dart';
 import '../../../data/models/chat.dart';
+import '../../../data/services/chat_service.dart';
 import '../../common/chat_bubble.dart';
 
 class ChatRoomScreen extends StatefulWidget {
-  final Product product;
-  final Seller otherUser;
+  final ChatRoom chatRoom;
 
   const ChatRoomScreen({
     super.key,
-    required this.product,
-    required this.otherUser,
+    required this.chatRoom,
   });
 
   @override
@@ -24,46 +24,126 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final List<Message> _messages = [
-    Message(
-      id: 'msg1',
-      content: '안녕하세요, 자전거 상태가 어떤가요?',
-      isMe: true,
-      timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-      type: MessageType.text,
-    ),
-    Message(
-      id: 'msg2',
-      content: '안녕하세요! 상태 정말 좋습니다. 거의 새 자전거처럼 관리했어요.',
-      isMe: false,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 50)),
-      type: MessageType.text,
-    ),
-    Message(
-      id: 'msg3',
-      content: '혹시 실제로 볼 수 있을까요?',
-      isMe: true,
-      timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 30)),
-      type: MessageType.text,
-    ),
-    Message(
-      id: 'msg4',
-      content: '네, 언제든지 가능합니다. 언제 시간 되시나요?',
-      isMe: false,
-      timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-      type: MessageType.text,
-    ),
-  ];
+  List<Message> _messages = [];
+  bool _isLoading = true;
+  bool _isSending = false;
+  RealtimeChannel? _realtimeChannel;
+
+  @override
+  void initState() {
+    super.initState();
+    _initializeChat();
+  }
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
+    _disposeRealtimeSubscription();
     super.dispose();
+  }
+
+  Future<void> _initializeChat() async {
+    try {
+      // 기존 메시지 로드
+      final messages = await ChatService.getMessages(widget.chatRoom.id);
+
+      // 실시간 구독 설정
+      _setupRealtimeSubscription();
+
+      // 메시지 읽음 처리
+      await ChatService.markMessagesAsRead(widget.chatRoom.id);
+
+      if (mounted) {
+        setState(() {
+          _messages = messages;
+          _isLoading = false;
+        });
+
+        // 스크롤을 맨 아래로
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _scrollToBottom();
+        });
+      }
+    } catch (e) {
+      log('Error initializing chat: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _setupRealtimeSubscription() {
+    try {
+      _realtimeChannel = ChatService.subscribeToMessages(
+        widget.chatRoom.id,
+        (message) {
+          if (mounted) {
+            setState(() {
+              _messages.add(message);
+            });
+            _scrollToBottom();
+
+            // 상대방 메시지인 경우 읽음 처리
+            if (!message.isMe) {
+              ChatService.markMessagesAsRead(widget.chatRoom.id);
+            }
+          }
+        },
+      );
+    } catch (e) {
+      log('Error setting up realtime subscription: $e');
+    }
+  }
+
+  Future<void> _disposeRealtimeSubscription() async {
+    if (_realtimeChannel != null) {
+      await ChatService.unsubscribe(_realtimeChannel!);
+    }
+  }
+
+  void _scrollToBottom() {
+    if (_scrollController.hasClients) {
+      _scrollController.animateTo(
+        _scrollController.position.maxScrollExtent,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOut,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(
+          backgroundColor: AppColors.surface,
+          elevation: 0,
+          title: Row(
+            children: [
+              CircleAvatar(
+                radius: 16,
+                backgroundColor: AppColors.primary,
+                child: Text(
+                  widget.chatRoom.otherUser.nickname[0],
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+              const SizedBox(width: AppDimensions.spacingSmall),
+              Text(widget.chatRoom.otherUser.nickname, style: AppTextStyles.subtitle1),
+            ],
+          ),
+        ),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
@@ -75,7 +155,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               radius: 16,
               backgroundColor: AppColors.primary,
               child: Text(
-                widget.otherUser.nickname[0],
+                widget.chatRoom.otherUser.nickname[0],
                 style: const TextStyle(
                   color: Colors.white,
                   fontSize: 14,
@@ -84,7 +164,7 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               ),
             ),
             const SizedBox(width: AppDimensions.spacingSmall),
-            Text(widget.otherUser.nickname, style: AppTextStyles.subtitle1),
+            Text(widget.chatRoom.otherUser.nickname, style: AppTextStyles.subtitle1),
           ],
         ),
         actions: [
@@ -145,14 +225,14 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  widget.product.title,
+                  widget.chatRoom.product.title,
                   style: AppTextStyles.subtitle2,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: AppDimensions.spacingXSmall),
                 Text(
-                  _formatPrice(widget.product.price),
+                  _formatPrice(widget.chatRoom.product.price),
                   style: AppTextStyles.price,
                 ),
               ],
@@ -233,8 +313,17 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
               shape: BoxShape.circle,
             ),
             child: IconButton(
-              onPressed: _sendMessage,
-              icon: const Icon(Icons.send, color: Colors.white, size: 20),
+              onPressed: _isSending ? null : _sendMessage,
+              icon: _isSending
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                    )
+                  : const Icon(Icons.send, color: Colors.white, size: 20),
             ),
           ),
         ],
@@ -242,56 +331,38 @@ class _ChatRoomScreenState extends State<ChatRoomScreen> {
     );
   }
 
-  void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
+  Future<void> _sendMessage() async {
+    if (_messageController.text.trim().isEmpty || _isSending) return;
 
-    final newMessage = Message(
-      id: 'msg_${DateTime.now().millisecondsSinceEpoch}',
-      content: _messageController.text.trim(),
-      isMe: true,
-      timestamp: DateTime.now(),
-      type: MessageType.text,
-    );
+    final content = _messageController.text.trim();
+    _messageController.clear();
 
     setState(() {
-      _messages.add(newMessage);
-      _messageController.clear();
+      _isSending = true;
     });
 
-    // Scroll to bottom
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
-      );
-    });
-
-    // Simulate other user reply after 2 seconds
-    Future.delayed(const Duration(seconds: 2), () {
+    try {
+      await ChatService.sendMessage(widget.chatRoom.id, content);
+      log('Message sent successfully');
+    } catch (e) {
+      log('Error sending message: $e');
       if (mounted) {
-        final replyMessage = Message(
-          id: 'reply_${DateTime.now().millisecondsSinceEpoch}',
-          content: '네, 알겠습니다!',
-          isMe: false,
-          timestamp: DateTime.now(),
-          type: MessageType.text,
+        // 에러 발생 시 메시지 내용 복원
+        _messageController.text = content;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('메시지 전송에 실패했습니다: ${e.toString()}'),
+            backgroundColor: AppColors.error,
+          ),
         );
-
+      }
+    } finally {
+      if (mounted) {
         setState(() {
-          _messages.add(replyMessage);
-        });
-
-        // Scroll to bottom
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _scrollController.animateTo(
-            _scrollController.position.maxScrollExtent,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeOut,
-          );
+          _isSending = false;
         });
       }
-    });
+    }
   }
 
   String _formatPrice(int price) {

@@ -1,7 +1,7 @@
 import 'dart:developer';
 import 'package:flutter/material.dart';
 import '../core/constants/colors.dart';
-import '../data/dummy_data.dart';
+import '../data/services/chat_service.dart';
 import '../widgets/screens/home/home_screen.dart';
 import '../widgets/screens/reservation/reservation_list_screen.dart';
 import '../widgets/screens/add/add_product_screen.dart';
@@ -30,7 +30,6 @@ class MainNavigation extends StatefulWidget {
 
 class _MainNavigationState extends State<MainNavigation> {
   int _currentIndex = 0;
-  int _refreshTrigger = 0;
 
   late final List<Widget> _screens;
   final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
@@ -50,6 +49,7 @@ class _MainNavigationState extends State<MainNavigation> {
       const ProfileScreen(),
     ];
   }
+
 
   void _refreshHomeScreen() {
     log('_refreshHomeScreen called');
@@ -112,34 +112,40 @@ class _MainNavigationState extends State<MainNavigation> {
             label: '등록',
           ),
           BottomNavigationBarItem(
-            icon: Stack(
-              children: [
-                const Icon(Icons.chat),
-                // Badge for unread messages
-                if (DummyData.totalUnreadCount > 0)
-                  Positioned(
-                    right: 0,
-                    top: 0,
-                    child: Container(
-                      width: 12,
-                      height: 12,
-                      decoration: const BoxDecoration(
-                        color: AppColors.error,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Text(
-                          '${DummyData.totalUnreadCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 8,
-                            fontWeight: FontWeight.bold,
+            icon: StreamBuilder<int>(
+              stream: ChatService.getTotalUnreadCountStream(),
+              builder: (context, snapshot) {
+                final unreadCount = snapshot.data ?? 0;
+                return Stack(
+                  children: [
+                    const Icon(Icons.chat),
+                    // Badge for unread messages
+                    if (unreadCount > 0)
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: AppColors.error,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(
+                              '$unreadCount',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 8,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  ),
-              ],
+                  ],
+                );
+              },
             ),
             label: '채팅',
           ),

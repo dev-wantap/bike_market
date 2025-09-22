@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../core/constants/colors.dart';
 import 'models/product.dart';
 import 'models/category.dart';
-import 'models/chat.dart';
 
 class DummyData {
   DummyData._();
@@ -311,95 +310,9 @@ class DummyData {
     return products.where((product) => product.category == categoryId).toList();
   }
 
-  // Chat rooms with dummy messages
-  static List<ChatRoom> get chatRooms => [
-    ChatRoom(
-      id: 'chat1',
-      product: products[1], // Trek MTB
-      otherUser: sellers[1],
-      unreadCount: 2,
-      messages: [
-        Message(
-          id: 'msg1',
-          content: '안녕하세요, 자전거 상태가 어떤가요?',
-          isMe: true,
-          timestamp: DateTime.now().subtract(const Duration(hours: 2)),
-          type: MessageType.text,
-        ),
-        Message(
-          id: 'msg2',
-          content: '안녕하세요! 상태 정말 좋습니다. 거의 새 자전거처럼 관리했어요.',
-          isMe: false,
-          timestamp: DateTime.now().subtract(
-            const Duration(hours: 1, minutes: 50),
-          ),
-          type: MessageType.text,
-        ),
-        Message(
-          id: 'msg3',
-          content: '혹시 실제로 볼 수 있을까요?',
-          isMe: true,
-          timestamp: DateTime.now().subtract(
-            const Duration(hours: 1, minutes: 30),
-          ),
-          type: MessageType.text,
-        ),
-        Message(
-          id: 'msg4',
-          content: '네, 언제든지 가능합니다. 해운대쪽에서 보실 수 있어요.',
-          isMe: false,
-          timestamp: DateTime.now().subtract(const Duration(minutes: 30)),
-          type: MessageType.text,
-        ),
-      ],
-    ),
-    ChatRoom(
-      id: 'chat2',
-      product: products[3], // Brompton 접이식
-      otherUser: sellers[3],
-      unreadCount: 0,
-      messages: [
-        Message(
-          id: 'msg5',
-          content: '접이식 자전거 구매 희망합니다.',
-          isMe: true,
-          timestamp: DateTime.now().subtract(const Duration(days: 1)),
-          type: MessageType.text,
-        ),
-        Message(
-          id: 'msg6',
-          content: '네, 감사합니다. 직접 보고 결정하세요.',
-          isMe: false,
-          timestamp: DateTime.now().subtract(const Duration(hours: 20)),
-          type: MessageType.text,
-        ),
-      ],
-    ),
-    ChatRoom(
-      id: 'chat3',
-      product: products[7], // 시티바이크
-      otherUser: sellers[2],
-      unreadCount: 1,
-      messages: [
-        Message(
-          id: 'msg7',
-          content: '가격 협상 가능한가요?',
-          isMe: true,
-          timestamp: DateTime.now().subtract(const Duration(hours: 3)),
-          type: MessageType.text,
-        ),
-        Message(
-          id: 'msg8',
-          content: '조금은 가능합니다. 얼마 정도 생각하고 계신가요?',
-          isMe: false,
-          timestamp: DateTime.now().subtract(const Duration(minutes: 20)),
-          type: MessageType.text,
-        ),
-      ],
-    ),
-  ];
+  // Chat rooms with dummy messages - Deprecated, using real ChatService now
+  // static List<ChatRoom> get chatRooms => [];
 
-  // Get total unread message count
-  static int get totalUnreadCount =>
-      chatRooms.fold(0, (total, chatRoom) => total + chatRoom.unreadCount);
+  // Get total unread message count - Deprecated, using real ChatService now
+  // static int get totalUnreadCount => 0;
 }

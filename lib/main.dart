@@ -1,7 +1,9 @@
 import 'dart:developer';
 
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'app.dart';
+import 'providers/favorite_provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -21,7 +23,14 @@ void main() async {
     }
   });
 
-  runApp(const BikeMarketApp());
+  runApp(
+    MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => FavoriteProvider()),
+      ],
+      child: const BikeMarketApp(),
+    ),
+  );
 }
 
 final supabase = Supabase.instance.client;
