@@ -15,8 +15,13 @@ import '../../../navigation/main_navigation.dart';
 
 class ProductDetailScreen extends StatefulWidget {
   final String productId;
+  final VoidCallback? onProductDeleted;
 
-  const ProductDetailScreen({super.key, required this.productId});
+  const ProductDetailScreen({
+    super.key,
+    required this.productId,
+    this.onProductDeleted,
+  });
 
   @override
   State<ProductDetailScreen> createState() => _ProductDetailScreenState();
@@ -689,50 +694,46 @@ class _ProductDetailScreenState extends State<ProductDetailScreen> {
                 // 먼저 context를 저장
                 final navigator = Navigator.of(context);
                 final scaffoldMessenger = ScaffoldMessenger.of(context);
-                
+
                 try {
                   log('Attempting to delete product ID: ${_product!.id}');
-                  
+
                   // Show loading
                   showDialog(
                     context: context,
                     barrierDismissible: false,
-                    builder: (context) => const Center(child: CircularProgressIndicator()),
+                    builder: (context) =>
+                        const Center(child: CircularProgressIndicator()),
                   );
 
                   // ProductService의 deleteProduct 호출
                   await ProductService.deleteProduct(_product!.id);
-                  
+
                   log('Product deletion successful on client-side.');
 
                   // 저장된 navigator와 scaffoldMessenger 사용
                   navigator.pop(); // Hide loading dialog
-                  
-                  // 홈으로 이동하면서 result 전달
+
+                  // 홈으로 이동
                   navigator.popUntil((route) => route.isFirst);
-                  
+
+                  // 상품 삭제 콜백 호출 (상품 등록과 같은 방식)
+                  widget.onProductDeleted?.call();
+
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: const Text('상품이 삭제되었습니다.'),
                       backgroundColor: AppColors.success,
                     ),
                   );
-
-                  // 홈 화면 강제 새로고침  
-                  Future.delayed(const Duration(milliseconds: 500), () {
-                    if (navigator.canPop()) {
-                      MainNavigation.refreshHome(navigator.context);
-                    }
-                  });
-
                 } catch (e) {
                   log('🔥🔥🔥 Product deletion failed: $e');
-                  
+
                   // 저장된 navigator와 scaffoldMessenger 사용
                   if (navigator.canPop()) {
                     navigator.pop(); // Hide loading dialog
                   }
-                  
+
                   scaffoldMessenger.showSnackBar(
                     SnackBar(
                       content: Text('삭제에 실패했습니다: ${e.toString()}'),

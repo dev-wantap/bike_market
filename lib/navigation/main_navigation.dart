@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import '../core/constants/colors.dart';
 import '../data/dummy_data.dart';
@@ -15,8 +16,15 @@ class MainNavigation extends StatefulWidget {
 
   // 외부에서 접근 가능한 static 메소드
   static void refreshHome(BuildContext context) {
-    final mainNavigation = context.findAncestorStateOfType<_MainNavigationState>();
-    mainNavigation?._refreshHomeScreen();
+    log('MainNavigation.refreshHome called');
+    final mainNavigation = context
+        .findAncestorStateOfType<_MainNavigationState>();
+    if (mainNavigation != null) {
+      log('MainNavigation state found, calling _refreshHomeScreen');
+      mainNavigation._refreshHomeScreen();
+    } else {
+      log('MainNavigation state not found');
+    }
   }
 }
 
@@ -25,6 +33,7 @@ class _MainNavigationState extends State<MainNavigation> {
   int _refreshTrigger = 0;
 
   late final List<Widget> _screens;
+  final GlobalKey<HomeScreenState> _homeKey = GlobalKey<HomeScreenState>();
 
   @override
   void initState() {
@@ -34,7 +43,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   void _updateScreens() {
     _screens = [
-      HomeScreen(key: ValueKey(_refreshTrigger), onRefresh: _refreshHomeScreen),
+      HomeScreen(key: _homeKey, onRefresh: _refreshHomeScreen),
       const ReservationListScreen(),
       AddProductScreen(onProductAdded: _onProductAdded),
       const ChatListScreen(),
@@ -43,11 +52,14 @@ class _MainNavigationState extends State<MainNavigation> {
   }
 
   void _refreshHomeScreen() {
-    // HomeScreen을 재생성하여 새로고침 효과
-    setState(() {
-      _refreshTrigger++;
-      _updateScreens();
-    });
+    log('_refreshHomeScreen called');
+    // 직접 HomeScreen의 새로고침 메서드 호출
+    if (_homeKey.currentState != null) {
+      log('HomeScreen state found, calling refreshData');
+      _homeKey.currentState!.refreshData();
+    } else {
+      log('HomeScreen state is null');
+    }
   }
 
   void _onProductAdded() {
@@ -72,7 +84,7 @@ class _MainNavigationState extends State<MainNavigation> {
           setState(() {
             _currentIndex = index;
           });
-          
+
           // 홈 탭으로 전환할 때마다 데이터 새로고침
           if (index == 0) {
             _refreshHomeScreen();

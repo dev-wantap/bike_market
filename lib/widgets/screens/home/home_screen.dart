@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:carousel_slider/carousel_slider.dart';
 import '../../../core/constants/colors.dart';
@@ -22,6 +23,9 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
+// GlobalKey를 위한 타입 정의
+typedef HomeScreenState = _HomeScreenState;
+
 class _HomeScreenState extends State<HomeScreen> {
   List<Product> _popularProducts = [];
   List<Product> _recentProducts = [];
@@ -34,8 +38,8 @@ class _HomeScreenState extends State<HomeScreen> {
     _fetchData();
   }
 
-
   void refreshData() {
+    log('HomeScreen.refreshData called');
     _handleRefresh();
   }
 
@@ -68,11 +72,41 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _handleRefresh() async {
-    setState(() {
-      _isLoadingPopular = true;
-      _isLoadingRecent = true;
-    });
-    await _fetchData();
+    // 최소 지연시간을 보장하여 애니메이션이 자연스럽게 보이도록 함
+    final futures = [
+      _fetchDataWithoutLoading(),
+      Future.delayed(const Duration(milliseconds: 500)), // 최소 500ms 지연
+    ];
+
+    await Future.wait(futures);
+  }
+
+  Future<void> _fetchDataWithoutLoading() async {
+    try {
+      final popularFuture = ProductService.getPopularProducts();
+      final recentFuture = ProductService.getRecentProducts();
+
+      final popular = await popularFuture;
+      final recent = await recentFuture;
+
+      if (mounted) {
+        setState(() {
+          _popularProducts = popular;
+          _recentProducts = recent;
+          _isLoadingPopular = false;
+          _isLoadingRecent = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _popularProducts = DummyData.popularProducts;
+          _recentProducts = DummyData.recentProducts;
+          _isLoadingPopular = false;
+          _isLoadingRecent = false;
+        });
+      }
+    }
   }
 
   @override
@@ -91,6 +125,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: RefreshIndicator(
         onRefresh: _handleRefresh,
         child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -267,8 +302,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
-                              builder: (context) =>
-                                  ProductDetailScreen(productId: product.id),
+                              builder: (context) => ProductDetailScreen(
+                                productId: product.id,
+                                onProductDeleted: _handleRefresh,
+                              ),
                             ),
                           );
                         },
@@ -323,8 +360,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) =>
-                              ProductDetailScreen(productId: product.id),
+                          builder: (context) => ProductDetailScreen(
+                            productId: product.id,
+                            onProductDeleted: _handleRefresh,
+                          ),
                         ),
                       );
                     },
