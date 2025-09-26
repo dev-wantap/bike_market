@@ -21,6 +21,8 @@ class AuthGate extends StatefulWidget {
 class _AuthGateState extends State<AuthGate> {
   final ProfileService _profileService = ProfileService();
   bool _isInitializing = true;
+  bool _isFadingOut = false;
+  Widget? _nextScreen;
 
   @override
   void initState() {
@@ -29,19 +31,49 @@ class _AuthGateState extends State<AuthGate> {
   }
 
   Future<void> _initialize() async {
-    // 초기 인증 상태 확인
-    await Future.delayed(const Duration(milliseconds: 1500)); // 스플래시 효과
+    // 최소 스플래시 표시 시간과 실제 로딩을 병렬로 처리
+    final minimumSplashTime = Future.delayed(const Duration(seconds: 1));
+    final loadingTask = _performInitialization();
 
+    // 둘 다 완료될 때까지 대기
+    await Future.wait([minimumSplashTime, loadingTask]);
+
+    // 페이드아웃 시작
+    if (mounted) {
+      setState(() {
+        _isFadingOut = true;
+      });
+    }
+  }
+
+  Future<void> _performInitialization() async {
     final currentSession = supabase.auth.currentSession;
     if (currentSession?.user != null) {
       // 로그인 상태면 프로필 확인
       await _ensureUserProfile(currentSession!.user);
-    }
 
+      // Provider들 초기화
+      await _initializeProviders();
+
+      // 다음 화면을 홈으로 설정
+      _nextScreen = const MainNavigation();
+    } else {
+      // 로그인되지 않은 경우 로그인 화면으로
+      _nextScreen = const LoginScreen();
+    }
+  }
+
+  Future<void> _initializeProviders() async {
     if (mounted) {
-      setState(() {
-        _isInitializing = false;
-      });
+      final favoriteProvider = context.read<FavoriteProvider>();
+      final chatNotificationProvider = context.read<ChatNotificationProvider>();
+
+      // Provider들이 아직 초기화되지 않았다면 초기화
+      if (favoriteProvider.favoriteCount == 0) {
+        await favoriteProvider.loadFavorites();
+      }
+
+      await chatNotificationProvider.initialize();
     }
   }
 
@@ -110,7 +142,19 @@ class _AuthGateState extends State<AuthGate> {
   Widget build(BuildContext context) {
     // 초기화 중이면 스플래시 화면 표시
     if (_isInitializing) {
-      return const SplashScreen();
+      return SplashScreen(
+        nextScreen: _nextScreen,
+        autoNavigate: false,
+        shouldStartFadeOut: _isFadingOut,
+        onFadeOutComplete: () {
+          // 페이드아웃 완료 후 초기화 완료로 설정
+          if (mounted) {
+            setState(() {
+              _isInitializing = false;
+            });
+          }
+        },
+      );
     }
 
     return StreamBuilder<AuthState>(
@@ -118,7 +162,7 @@ class _AuthGateState extends State<AuthGate> {
       builder: (context, snapshot) {
         // 로딩 상태 처리
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const SplashScreen();
+          return const SplashScreen(autoNavigate: false);
         }
 
         // 현재 세션 상태 확인 (실시간)
@@ -132,25 +176,8 @@ class _AuthGateState extends State<AuthGate> {
         log('Current session in build: ${currentSession?.user.email}');
 
         if (currentSession != null) {
-          // 로그인된 경우 Provider 초기화 후 메인 네비게이션으로
-          WidgetsBinding.instance.addPostFrameCallback((_) async {
-            if (mounted) {
-              final favoriteProvider = context.read<FavoriteProvider>();
-              final chatNotificationProvider = context
-                  .read<ChatNotificationProvider>();
-
-              // Provider들이 아직 초기화되지 않았다면 초기화
-              if (favoriteProvider.favoriteCount == 0) {
-                await favoriteProvider.loadFavorites();
-              }
-
-              await chatNotificationProvider.initialize();
-            }
-          });
-
           return const MainNavigation();
         } else {
-          // 로그인되지 않은 경우 로그인 화면으로
           return const LoginScreen();
         }
       },
