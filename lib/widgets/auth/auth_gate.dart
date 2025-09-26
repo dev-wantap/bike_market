@@ -30,7 +30,7 @@ class _AuthGateState extends State<AuthGate> {
 
   Future<void> _initialize() async {
     // 초기 인증 상태 확인
-    await Future.delayed(const Duration(milliseconds: 500)); // 스플래시 효과
+    await Future.delayed(const Duration(milliseconds: 1500)); // 스플래시 효과
 
     final currentSession = supabase.auth.currentSession;
     if (currentSession?.user != null) {
