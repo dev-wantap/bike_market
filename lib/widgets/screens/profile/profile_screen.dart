@@ -12,6 +12,7 @@ import '../../../main.dart';
 import 'my_products_screen.dart';
 import 'favorites_screen.dart';
 import 'settings_screen.dart';
+import 'customer_service_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -402,9 +403,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             title: '고객센터',
             subtitle: '문의사항이나 도움이 필요하시면 연락주세요',
             onTap: () {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(const SnackBar(content: Text('고객센터 기능')));
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (context) => const CustomerServiceScreen(),
+                ),
+              );
             },
           ),
           _buildMenuDivider(),
