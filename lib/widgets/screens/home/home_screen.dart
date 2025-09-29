@@ -275,6 +275,12 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildCategorySection() {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final horizontalPadding = AppDimensions.paddingMedium * 2;
+    final totalSpacing = AppDimensions.spacingSmall * 4; // 5열 사이의 4개 간격
+    final availableWidth = screenWidth - horizontalPadding - totalSpacing;
+    final itemWidth = availableWidth / 5;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -291,9 +297,9 @@ class _HomeScreenState extends State<HomeScreen> {
           padding: const EdgeInsets.symmetric(
             horizontal: AppDimensions.paddingMedium,
           ),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 5, // 5열로 변경
-            childAspectRatio: 0.8, // 비율 조정
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 5,
+            childAspectRatio: itemWidth / (itemWidth * 1.2), // 높이를 너비의 1.2배로 설정
             crossAxisSpacing: AppDimensions.spacingSmall,
             mainAxisSpacing: AppDimensions.spacingMedium,
           ),
